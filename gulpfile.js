@@ -12,15 +12,14 @@ var header     = require("gulp-header");
 var livereload = require("gulp-livereload");
 var mapStream  = require("map-stream");
 var minify     = require("gulp-minify-css");
-var ncp        = require("ncp").ncp;
 var notify     = require("gulp-notify");
 var plumber    = require("gulp-plumber");
 var sass       = require("gulp-sass");
-var temp       = require("temp");
 
 var CONFIG = {
   PATHS: {
     PUBLIC: "public",
+    APP:    "app",
     SERVER: "node_modules/.bin/http-server",
   },
   LAYOUTS: {
@@ -51,9 +50,6 @@ var CONFIG = {
     DEST: "bower_components",
   },
 };
-
-// Track temporary directories
-temp.track();
 
 // Helpers
 
@@ -154,7 +150,7 @@ gulp.task("dev", ["watch"], function () {
   /* eslint-enable */
 });
 
-gulp.task("deploy", ["default"], function () {
+gulp.task("deploy", function () {
   /* eslint-disable no-console */
   var branch = child.execSync("git symbolic-ref --short -q HEAD 2>/dev/null")
                     .toString()
@@ -162,30 +158,34 @@ gulp.task("deploy", ["default"], function () {
 
   if (branch !== "master") throw new Error("Can only deploy from master");
 
-  console.log("Copying public site to temporary directory...");
+  console.log("Switching to gh-pages...");
+  child.execSync("git checkout gh-pages");
 
-  temp.mkdir("koral-public-deploy", function (err, dirPath) {
-    ncp(CONFIG.PATHS.PUBLIC, dirPath, function () {
-      console.log("Switching to gh-pages...");
-      child.execSync("git checkout gh-pages");
+  console.log("Merging master into gh-pages...");
+  child.execSync("git merge master --no-commit --no-ff");
 
-      console.log("Deleting everything...");
-      del.sync("*");
+  console.log("Moving the contents of the public directory to the root");
+  child.execSync("mv -v " + CONFIG.PATHS.PUBLIC + "/* .");
 
-      console.log("Copying from the temporary directory...");
-      ncp(dirPath, ".", function () {
+  console.log("Removing redundant files...");
+  del.sync([
+    CONFIG.PATHS.PUBLIC,
+    CONFIG.PATHS.APP,
+    ".eslintrc",
+    "gulpfile.js",
+    "bower.json",
+    "package.json",
+  ]);
 
-        console.log("Committing...");
-        child.execSync("git commit -am 'Update gh-pages'");
+  console.log("Committing...");
+  child.execSync("git add .");
+  child.execSync("git commit -am 'Update gh-pages'");
 
-        console.log("Pushing...");
-        child.execSync("git push");
+  console.log("Pushing...");
+  child.execSync("git push origin gh-pages");
 
-        console.log("Switching back to " + branch + "...");
-        child.execSync("git checkout " + branch);
-      });
-    });
-  });
+  console.log("Switching back to " + branch + "...");
+  child.execSync("git checkout master");
   /* eslint-enable */
 });
 
