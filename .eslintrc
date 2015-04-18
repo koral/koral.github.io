@@ -70,5 +70,6 @@
     "console": true,
     "module": true,
     "require": true,
+    "Buffer": true
   }
 }
