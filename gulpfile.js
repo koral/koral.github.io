@@ -1,6 +1,6 @@
 var fs    = require("fs");
 var path  = require("path");
-var spawn = require("child_process").spawn;
+var child = require("child_process");
 
 var bower      = require("gulp-bower");
 var del        = require("del");
@@ -12,9 +12,11 @@ var header     = require("gulp-header");
 var livereload = require("gulp-livereload");
 var mapStream  = require("map-stream");
 var minify     = require("gulp-minify-css");
+var ncp        = require("ncp").ncp;
 var notify     = require("gulp-notify");
 var plumber    = require("gulp-plumber");
 var sass       = require("gulp-sass");
+var temp       = require("temp");
 
 var CONFIG = {
   PATHS: {
@@ -49,6 +51,9 @@ var CONFIG = {
     DEST: "bower_components",
   },
 };
+
+// Track temporary directories
+temp.track();
 
 // Helpers
 
@@ -142,10 +147,45 @@ gulp.task("watch", ["default"], function () {
 });
 
 gulp.task("dev", ["watch"], function () {
-  var proc = spawn(CONFIG.PATHS.SERVER, [CONFIG.PATHS.PUBLIC, "-p4000"]);
+  var proc = child.spawn(CONFIG.PATHS.SERVER, [CONFIG.PATHS.PUBLIC, "-p4000"]);
 
   /* eslint-disable no-console */
   proc.stdout.on("data", function (data) { console.log(data.toString()); });
+  /* eslint-enable */
+});
+
+gulp.task("deploy", ["default"], function () {
+  /* eslint-disable no-console */
+  var branch = child.execSync("git symbolic-ref --short -q HEAD 2>/dev/null")
+                    .toString()
+                    .trim();
+
+  if (branch !== "master") throw new Error("Can only deploy from master");
+
+  console.log("Copying public site to temporary directory...");
+
+  temp.mkdir("koral-public-deploy", function (err, dirPath) {
+    ncp(CONFIG.PATHS.PUBLIC, dirPath, function () {
+      console.log("Switching to gh-pages...");
+      child.execSync("git checkout gh-pages");
+
+      console.log("Deleting everything...");
+      del.sync("*");
+
+      console.log("Copying from the temporary directory...");
+      ncp(dirPath, ".", function () {
+
+        console.log("Committing...");
+        child.execSync("git commit -am 'Update gh-pages'");
+
+        console.log("Pushing...");
+        child.execSync("git push");
+
+        console.log("Switching back to " + branch + "...");
+        child.execSync("git checkout " + branch);
+      });
+    });
+  });
   /* eslint-enable */
 });
 
