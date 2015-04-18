@@ -7,7 +7,7 @@ var del        = require("del");
 var ghaml      = require("gulp-haml");
 var glob       = require("gulp-css-globbing");
 var gulp       = require("gulp");
-var haml       = require("hamljs");
+var haml       = require("haml");
 var header     = require("gulp-header");
 var livereload = require("gulp-livereload");
 var mapStream  = require("map-stream");
@@ -78,11 +78,11 @@ gulp.task("bower", function () {
 
 gulp.task("views", function () {
   var src    = path.join(CONFIG.LAYOUTS.SRC, CONFIG.LAYOUTS.DEFAULT + ".haml");
-  var layout = haml.compile(fs.readFileSync(src));
+  var layout = haml(fs.readFileSync(src, "utf-8"));
 
   gulp.src(CONFIG.VIEWS.SRC + "/**/*.haml")
       .pipe(errorHandler())
-      .pipe(ghaml({ compiler: "visionmedia" }))
+      .pipe(ghaml())
       .pipe(mapStream(function (file, callback) {
         file.contents = new Buffer(layout({ content: file.contents }));
         callback(null, file);

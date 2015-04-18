@@ -26,6 +26,15 @@
   }
 }
 
+////////////
+// Roboto //
+////////////
+
+@include font("Roboto", "roboto/roboto-thin", 200, normal, "robotothin");
+@include font("Roboto", "roboto/roboto-light", 300, normal, "robotolight");
+@include font("Roboto", "roboto/roboto-regular", normal, normal, "robotoregular");
+@include font("Roboto", "roboto/roboto-medium", normal, normal, "robotomedium");
+
 ////////////////
 // Montserrat //
 ////////////////
