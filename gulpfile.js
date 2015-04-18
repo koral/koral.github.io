@@ -165,7 +165,7 @@ gulp.task("deploy", function () {
   child.execSync("git checkout master -- public");
 
   console.log("Moving the contents of the public directory to the root...");
-  child.execSync("mv -v " + CONFIG.PATHS.PUBLIC + "/* .");
+  child.execSync("rsync -a " + CONFIG.PATHS.PUBLIC + "/ .");
 
   console.log("Removing redundant files...");
   del.sync([
