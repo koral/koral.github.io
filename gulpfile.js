@@ -161,10 +161,10 @@ gulp.task("deploy", function () {
   console.log("Switching to gh-pages...");
   child.execSync("git checkout gh-pages");
 
-  console.log("Merging master into gh-pages...");
-  child.execSync("git merge master --no-commit --no-ff");
+  console.log("Adding contents of master into gh-pages...");
+  child.execSync("git checkout master -- public");
 
-  console.log("Moving the contents of the public directory to the root");
+  console.log("Moving the contents of the public directory to the root...");
   child.execSync("mv -v " + CONFIG.PATHS.PUBLIC + "/* .");
 
   console.log("Removing redundant files...");
