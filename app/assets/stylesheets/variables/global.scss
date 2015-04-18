@@ -1,0 +1,71 @@
+// Global variables
+// This file contains most canonical definitions for variables
+
+////////////
+// Colors //
+////////////
+
+$primary-color: #ed3832;
+$primary-color-dark: #db342e;
+
+// Text colors
+$normal-text-color: #363333;
+$secondary-text-color: #959494;
+$unimportant-text-color: #c7c7c7;
+
+$link-color: $primary-color;
+
+// Spacers (found in `mixins`)
+$spacer-color: $unimportant-text-color;
+
+// Page background color
+$canvas-color: white;
+
+// Borders
+$base-border-color: #c7c7c7;
+
+//////////
+// Text //
+//////////
+
+$font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+$display-font-family: join("Montserrat", $font-family);
+
+// Font sizes
+$bigger-text: 18px;
+$normal-text: 16px;
+$small-text: 14px;
+
+$thin-font-weight: 200;
+$light-font-weight: 300;
+$bold-font-weight: 500;
+
+$text-line-height: 1.8;
+
+// Headings
+
+// Font sizes for every heading
+$heading-font-sizes: (
+  1: 44px,
+  2: 38px,
+  3: $bigger-text,
+  4: $normal-text,
+  5: $small-text,
+  6: 12px,
+);
+
+// Font weights for every heading
+$heading-font-weights: (
+  1: normal,
+  2: $light-font-weight,
+  3: $light-font-weight,
+  4: $light-font-weight,
+  5: normal,
+  6: normal,
+);
+
+/////////////
+// Visuals //
+/////////////
+
+$base-border-radius: 3px;

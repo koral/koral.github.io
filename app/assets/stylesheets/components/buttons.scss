@@ -1,0 +1,44 @@
+// Styles for buttons
+
+@mixin button-states($button-background: $button-background,
+                     $button-color: $button-color) {
+  &, &:hover {
+    color: $button-color;
+    text-decoration: none;
+  }
+
+  &:focus, &:hover {
+    background-color: tint($button-background, 15%);
+    color: $button-color;
+    text-decoration: none;
+  }
+
+  &, &:active {
+    background-color: $button-background;
+  }
+}
+
+button, .button {
+  @extend %input-base;
+  @include user-select(none);
+
+  display: inline-block;
+  height: $button-height;
+  line-height: $button-height;
+  padding: 0 $button-padding;
+  margin: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  text-align: center;
+  font-weight: $light-font-weight;
+  border-radius: $base-border-radius;
+
+  @include button-states;
+
+  &.secondary {
+    @include button-states($unimportant-text-color);
+  }
+}

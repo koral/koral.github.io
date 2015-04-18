@@ -1,0 +1,12 @@
+// Styles for the page hero
+
+.hero {
+  width: 100%;
+  height: 360px;
+}
+
+  .hero__title {
+    span {
+      font-weight: $light-font-weight;
+    }
+  }

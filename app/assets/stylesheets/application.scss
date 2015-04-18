@@ -1,0 +1,26 @@
+// This is the index stylesheet. It imports all other stylesheets.
+
+// Variables.
+@import
+  "variables/global",
+  "variables/bootstrap",
+  "variables/components",
+  "variables/resources";
+
+// Groundwork: the basic stuff.
+@import
+  "groundwork/dependencies",
+  "groundwork/fonts",
+  "groundwork/media",
+  "groundwork/mixins",
+  "groundwork/images",
+  "groundwork/animations",
+  "groundwork/generic",
+  "groundwork/typography";
+
+// Components and resources
+@import "components/*";
+@import "resources/*";
+
+// The sheet of shame
+@import "shame";

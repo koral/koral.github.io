@@ -1,0 +1,20 @@
+// Bootstrap variables should only reference variables defined in `global`,
+// and never act as canonical definitions nor hardcode any values. Do not use
+// bootstrap variables anywhere in the rest of the code.
+
+$brand-primary: $primary-color !default;
+
+$body-bg: $canvas-color !default;
+
+$text-color: $normal-text-color !default;
+$link-color: $link-color !default;
+$link-hover-color: $link-color !default;
+
+$font-family-sans-serif: $font-family !default;
+$font-family-base: $font-family-sans-serif !default;
+
+$font-size-base: $normal-text !default;
+$font-size-large: $bigger-text !default;
+$font-size-small: $small-text !default;
+
+$line-height-base: $text-line-height !default;

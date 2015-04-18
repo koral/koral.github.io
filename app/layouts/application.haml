@@ -1,0 +1,16 @@
+!!! 5
+%html
+  %head
+    %meta{ charset: "utf-8" }
+    %title Koral
+
+    %link{ rel: "stylesheet", href: "/stylesheets/application.css" }
+  %body
+    %header.header
+      %h1.header__logo
+        %a{ href: "/" }
+          %img{ src: "images/logo.svg", alt: "Koral" }
+
+    != content
+
+    %script{ src: "/javascripts/index.js" }

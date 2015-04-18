@@ -1,0 +1,27 @@
+// SVG images
+// Rendered with the the `svg_image_tag` helper.
+img.asset.svg {
+  display: none;
+}
+
+html.svg {
+  img.asset {
+    display: none;
+
+    &.svg {
+      display: inline;
+    }
+  }
+}
+
+// SVG images as backgrounds.
+@mixin svg-image($image) {
+  $image-png: $image + ".png";
+  $image-svg: $image + ".svg";
+
+  background-image: image-url($image-png);
+
+  html.svg & {
+    background-image: image-url($image-svg);
+  }
+}

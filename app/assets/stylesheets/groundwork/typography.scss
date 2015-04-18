@@ -1,0 +1,53 @@
+// This file hosts typography-related styles.
+
+h1, h2, h3, h4, h5, h6 {
+  color: currentcolor;
+  line-height: $text-line-height;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+// Special styles for h1
+
+h1 {
+  font-family: $display-font-family;
+}
+
+// Heading font sizes
+
+@for $i from 1 to 6 {
+  h#{$i} {
+    $size:  map-get($heading-font-sizes, $i);
+    font-size: $size;
+
+    $weight: map-get($heading-font-weights, $i);
+    font-weight: $weight;
+  }
+}
+
+// Links
+
+a {
+  &.ancillary {
+    color: $secondary-text-color;
+  }
+}
+
+// Paragraphs
+
+p {
+  &.copy {
+    color: $secondary-text-color;
+    text-align: center;
+  }
+}
+
+strong {
+  font-weight: normal;
+
+  &.important {
+    color: $primary-color;
+  }
+}

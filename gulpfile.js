@@ -5,6 +5,7 @@ var spawn = require("child_process").spawn;
 var bower      = require("gulp-bower");
 var del        = require("del");
 var ghaml      = require("gulp-haml");
+var glob       = require("gulp-css-globbing");
 var gulp       = require("gulp");
 var haml       = require("hamljs");
 var header     = require("gulp-header");
@@ -21,20 +22,28 @@ var CONFIG = {
     SERVER: "node_modules/.bin/http-server",
   },
   LAYOUTS: {
-    ORIGIN:  "layouts",
+    SRC:     "app/layouts",
     DEFAULT: "application",
   },
   VIEWS: {
-    ORIGIN: "views",
-    DEST:   "public",
+    SRC:  "app/views",
+    DEST: "public",
   },
   STYLESHEETS: {
-    ORIGIN: "assets/stylesheets",
-    DEST:   "public/stylesheets",
+    SRC:  "app/assets/stylesheets",
+    DEST: "public/stylesheets",
   },
   JAVASCRIPTS: {
-    ORIGIN: "assets/javascripts",
-    DEST:   "public/javascripts",
+    SRC:  "app/assets/javascripts",
+    DEST: "public/javascripts",
+  },
+  IMAGES: {
+    SRC:  "app/assets/images",
+    DEST: "public/images",
+  },
+  FONTS: {
+    SRC:  "app/assets/fonts",
+    DEST: "public/fonts",
   },
   BOWER: {
     DEST: "bower_components",
@@ -45,7 +54,7 @@ var CONFIG = {
 
 var notice = function (location) {
   return header([
-    "/* Don't edit this file directly. Make changes in",
+    "/* Don't edit this file. Make changes in",
     location,
     "instead. */\n",
   ].join(" "));
@@ -67,21 +76,15 @@ gulp.task("bower", function () {
     .pipe(gulp.dest(CONFIG.BOWER.DEST));
 });
 
-gulp.task("haml", function () {
-  var layoutPath = path.join(
-    CONFIG.LAYOUTS.ORIGIN, CONFIG.LAYOUTS.DEFAULT + ".haml"
-  );
+gulp.task("views", function () {
+  var src    = path.join(CONFIG.LAYOUTS.SRC, CONFIG.LAYOUTS.DEFAULT + ".haml");
+  var layout = haml.compile(fs.readFileSync(src));
 
-  var layout = fs.readFileSync(layoutPath);
-
-  gulp.src(CONFIG.VIEWS.ORIGIN + "/**/*.haml")
+  gulp.src(CONFIG.VIEWS.SRC + "/**/*.haml")
       .pipe(errorHandler())
       .pipe(ghaml({ compiler: "visionmedia" }))
       .pipe(mapStream(function (file, callback) {
-        file.contents = new Buffer(haml.render(layout, {
-          locals: { content: file.contents }
-        }));
-
+        file.contents = new Buffer(layout({ content: file.contents }));
         callback(null, file);
       }))
       .pipe(gulp.dest(CONFIG.VIEWS.DEST))
@@ -89,36 +92,53 @@ gulp.task("haml", function () {
 });
 
 gulp.task("stylesheets", function () {
-  gulp.src(CONFIG.STYLESHEETS.ORIGIN + "/application.scss")
+  gulp.src(CONFIG.STYLESHEETS.SRC + "/application.scss")
       .pipe(errorHandler())
+      .pipe(glob({ extensions: [".css", ".scss"] }))
       .pipe(sass({
         includePaths: [
-          CONFIG.BOWER.DEST + "/bootstrap-sass-official/assets/stylesheets"
+          CONFIG.STYLESHEETS.SRC,
+          CONFIG.BOWER.DEST + "/bootstrap-sass-official/assets/stylesheets",
+          CONFIG.BOWER.DEST + "/bourbon/app/assets/stylesheets",
         ],
       }))
-      .pipe(minify())
-      .pipe(notice(CONFIG.STYLESHEETS.ORIGIN))
+      .pipe(minify({ keepSpecialComments: 0 }))
+      .pipe(notice(CONFIG.STYLESHEETS.SRC))
       .pipe(gulp.dest(CONFIG.STYLESHEETS.DEST))
       .pipe(livereload());
 });
 
 gulp.task("javascripts", function () {
-  gulp.src(CONFIG.JAVASCRIPTS.ORIGIN  + "/index.js")
+  gulp.src(CONFIG.JAVASCRIPTS.SRC  + "/index.js")
       .pipe(errorHandler())
-      .pipe(notice(CONFIG.JAVASCRIPTS.ORIGIN))
+      .pipe(notice(CONFIG.JAVASCRIPTS.SRC))
       .pipe(gulp.dest(CONFIG.JAVASCRIPTS.DEST))
       .pipe(livereload());
 });
 
-gulp.task("default", ["bower", "haml", "stylesheets", "javascripts"]);
+gulp.task("images", function () {
+  gulp.src(CONFIG.IMAGES.SRC + "/**/*")
+      .pipe(gulp.dest(CONFIG.IMAGES.DEST));
+});
+
+gulp.task("fonts", function () {
+  gulp.src(CONFIG.FONTS.SRC + "/**/*")
+      .pipe(gulp.dest(CONFIG.FONTS.DEST));
+});
+
+gulp.task("default", [
+  "bower", "views", "stylesheets", "javascripts", "images", "fonts"
+]);
 
 gulp.task("watch", ["default"], function () {
   livereload.listen();
 
-  gulp.watch(CONFIG.VIEWS.ORIGIN + "/**/*.haml",       ["haml"]);
-  gulp.watch(CONFIG.LAYOUTS.ORIGIN + "/**/*.haml",     ["haml"]);
-  gulp.watch(CONFIG.STYLESHEETS.ORIGIN + "/**/*.scss", ["stylesheets"]);
-  gulp.watch(CONFIG.JAVASCRIPTS.ORIGIN + "/**/*.js",   ["javascripts"]);
+  gulp.watch(CONFIG.VIEWS.SRC + "/**/*.haml",       ["views"]);
+  gulp.watch(CONFIG.LAYOUTS.SRC + "/**/*.haml",     ["views"]);
+  gulp.watch(CONFIG.STYLESHEETS.SRC + "/**/*.scss", ["stylesheets"]);
+  gulp.watch(CONFIG.JAVASCRIPTS.SRC + "/**/*.js",   ["javascripts"]);
+  gulp.watch(CONFIG.IMAGES.SRC + "/**/*",           ["images"]);
+  gulp.watch(CONFIG.FONTS.SRC + "/**/*",           ["fonts"]);
 });
 
 gulp.task("dev", ["watch"], function () {

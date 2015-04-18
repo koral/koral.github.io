@@ -1,0 +1,19 @@
+// Styles for the header
+
+.header {
+  width: 100%;
+  height: 90px;
+  text-align: center;
+  background: lightgray;
+
+  &:before {
+    @include aligner;
+  }
+}
+
+  .header__logo {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 0;
+    margin: 0;
+  }

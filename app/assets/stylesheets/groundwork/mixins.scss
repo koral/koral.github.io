@@ -1,0 +1,115 @@
+// Use this file for generic mixins and whatnot!
+
+////////////
+// Layout //
+////////////
+
+@mixin aligner {
+  content: "";
+  height: 100%;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+////////////////
+// Typography //
+////////////////
+
+// Styles all headings in one fell swoop
+@mixin headings {
+  h1, h2, h3, h4, h5, h6 {
+    @content;
+  }
+}
+
+// Styles headings and paragraphs
+@mixin typography {
+  @include headings {
+    @content;
+  }
+
+  p {
+    @content;
+  }
+}
+
+/////////////////
+// Spacer dots //
+/////////////////
+
+@mixin spacer-dot-color($color: $spacer-color) {
+  &:before, &:after {
+    color: $color;
+  }
+}
+
+@mixin spacer-dot-base($color: $spacer-color) {
+  @include spacer-dot-color($color);
+
+  &:before, &:after {
+    @include user-select(none);
+    content: "·";
+    display: none;
+  }
+}
+
+@function spacer-dot-margins($space: 8px, $biased: true) {
+  $inner: $space;
+  $outer: $space;
+
+  @if ($biased) {
+    $outer: $outer - 4; // Accounts for space between inline-block elements
+  }
+
+  @return (inner: $inner, outer: $outer);
+}
+
+@mixin spacer-dot-right($space: 8px, $color: $spacer-color, $biased: true) {
+  $margins: spacer-dot-margins($space, $biased);
+
+  @include spacer-dot-base($color);
+  margin-right: map-get($margins, outer);
+
+  &:after {
+    @include spacer-dot-base($color);
+    display: inline-block !important;
+    margin-left: map-get($margins, inner);
+  }
+}
+
+@mixin spacer-dot-left($space: 8px, $color: $spacer-color, $biased: true) {
+  $margins: spacer-dot-margins($space, $biased);
+
+  @include spacer-dot-base($color);
+  margin-left: map-get($margins, outer);
+
+  &:before {
+    @include spacer-dot-base($color);
+    display: inline-block !important;
+    margin-right: map-get($margins, inner);
+  }
+}
+
+@mixin spacer-dot-clear {
+  &:before, &:after {
+    content: none;
+    display: none;
+  }
+}
+
+////////////////
+// Animations //
+////////////////
+
+// Generates a keyframe animation and an `.animated-NAME` class.
+@mixin keyframes-and-class($declaration) {
+  $animation-name: nth($declaration, 1);
+
+  @include keyframes($animation-name) {
+    @content;
+  }
+
+  .animated-#{$animation-name} {
+    @include animation($declaration);
+  }
+}

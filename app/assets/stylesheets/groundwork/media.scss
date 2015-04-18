@@ -1,0 +1,44 @@
+// Utilities for responsiveness
+
+///////////////////
+// Media queries //
+///////////////////
+
+$abbreviations: (
+  small:  "sm",
+  medium: "md",
+  large:  "lg",
+);
+
+$screens: (
+  sm: (min: $screen-sm-min, max: $screen-sm-max),
+  md: (min: $screen-md-min, max: $screen-md-max),
+  lg: (min: $screen-lg-min),
+);
+
+@function map-size($screen, $point) {
+  $key: map-get($abbreviations, $screen) or $screen;
+
+  $screen: map-get($screens, $key);
+  $width: map-get($screen, $point);
+
+  @return $width;
+}
+
+// You want to use bigger for mobile-up design
+@mixin bigger($screen) {
+  @media screen and (min-width: map-size($screen, "min")) {
+    @content;
+  }
+}
+
+@mixin smaller($screen) {
+  $key: map-get($abbreviations, $screen) or $screen;
+
+  $screen: map-get($screens, $screen);
+  $width: map-get($screen, "max");
+
+  @media screen and (max-width: map-size($screen, "max")) {
+    @content;
+  }
+}

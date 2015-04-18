@@ -1,0 +1,34 @@
+// Definitions for custom fonts used on the site
+
+////////////////
+// Font mixin //
+////////////////
+
+@mixin font($family-name, $path, $weight, $style, $svg-anchor) {
+  $fullpath: "/fonts/" + $path;
+
+  @font-face {
+    font-family: $family-name;
+    src: url($fullpath + ".eot");
+    src: url($fullpath + ".eot?#iefix") format("embedded-opentype"),
+         url($fullpath + ".woff") format("woff"),
+         url($fullpath + ".ttf") format("truetype"),
+         url($fullpath + ".svg#" + $svg-anchor) format("svg");
+    font-weight: $weight;
+    font-style: $style;
+  }
+
+  @media screen and (-webkit-min-device-pixel-ratio:0) {
+    @font-face {
+      font-family: $family-name;
+      src: url($fullpath + ".svg#" + $svg-anchor) format("svg");
+    }
+  }
+}
+
+////////////////
+// Montserrat //
+////////////////
+
+@include font("Montserrat", "montserrat/montserrat-light", 300, normal, "montserratlight");
+@include font("Montserrat", "montserrat/montserrat-regular", normal, normal, "montserratregular");

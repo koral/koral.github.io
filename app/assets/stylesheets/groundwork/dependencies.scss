@@ -1,0 +1,24 @@
+// This file includes the smallest possible parts of our dependencies
+
+///////////////
+// Bootstrap //
+///////////////
+
+// Core variables and mixins
+@import "bootstrap/variables";
+@import "bootstrap/mixins";
+
+// Reset and dependencies
+@import "bootstrap/normalize";
+@import "bootstrap/print";
+
+// Core CSS
+@import "bootstrap/scaffolding";
+@import "bootstrap/type";
+@import "bootstrap/grid";
+
+/////////////
+// Bourbon //
+/////////////
+
+@import "bourbon";

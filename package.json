@@ -10,6 +10,7 @@
     "del": "^1.1.1",
     "gulp": "^3.8.11",
     "gulp-bower": "0.0.10",
+    "gulp-css-globbing": "^0.1.7",
     "gulp-haml": "^0.1.5",
     "gulp-header": "^1.2.2",
     "gulp-livereload": "^3.8.0",

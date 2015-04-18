@@ -1,1 +1,1 @@
-/* Don't edit this file directly. Make changes in assets/javascripts instead. */
+/* Don't edit this file. Make changes in app/assets/javascripts instead. */
