@@ -5,7 +5,7 @@
 ////////////////
 
 @mixin font($family-name, $path, $weight, $style, $svg-anchor) {
-  $fullpath: "/fonts/" + $path;
+  $fullpath: "fonts/" + $path;
 
   @font-face {
     font-family: $family-name;
