@@ -1,0 +1,14 @@
+{
+  "name": "koral-public",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap-sass-official": "~3.3.4"
+  }
+}
