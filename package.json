@@ -1,0 +1,8 @@
+{
+  "name": "koral-public",
+  "version": "0.0.1",
+  "description": "Public website for Koral",
+  "private": true,
+  "author": "Gabriele Cirulli",
+  "license": "MIT"
+}
