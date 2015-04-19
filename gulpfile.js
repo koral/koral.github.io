@@ -9,18 +9,21 @@ var glob       = require("gulp-css-globbing");
 var gulp       = require("gulp");
 var haml       = require("haml");
 var header     = require("gulp-header");
+var kexec      = require("kexec");
 var livereload = require("gulp-livereload");
 var mapStream  = require("map-stream");
 var minify     = require("gulp-minify-css");
+var notifier   = require("node-notifier");
 var notify     = require("gulp-notify");
 var plumber    = require("gulp-plumber");
 var sass       = require("gulp-sass");
 
 var CONFIG = {
   PATHS: {
-    PUBLIC: "public",
-    APP:    "app",
-    SERVER: "node_modules/.bin/http-server",
+    PUBLIC:   "public",
+    APP:      "app",
+    SERVER:   "node_modules/.bin/http-server",
+    GULPFILE: "gulpfile.js",
   },
   LAYOUTS: {
     SRC:     "app/layouts",
@@ -131,6 +134,18 @@ gulp.task("default", [
   "bower", "views", "stylesheets", "javascripts", "images", "fonts"
 ]);
 
+gulp.task("reload", function () {
+  notifier.notify({
+    title: "Gulp",
+    message: "Reloading gulpfile.js",
+    sound: "Pop"
+  });
+  /* eslint-disable no-console */
+  console.log("Reloading gulpfile.js");
+  /* eslint-enable */
+  kexec(process.argv.join(" "));
+});
+
 gulp.task("watch", ["default"], function () {
   livereload.listen();
 
@@ -140,6 +155,8 @@ gulp.task("watch", ["default"], function () {
   gulp.watch(CONFIG.JAVASCRIPTS.SRC + "/**/*.js",   ["javascripts"]);
   gulp.watch(CONFIG.IMAGES.SRC + "/**/*",           ["images"]);
   gulp.watch(CONFIG.FONTS.SRC + "/**/*",           ["fonts"]);
+
+  gulp.watch(CONFIG.PATHS.GULPFILE, ["reload"]);
 });
 
 gulp.task("dev", ["watch"], function () {

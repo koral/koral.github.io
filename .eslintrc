@@ -70,6 +70,7 @@
     "console": true,
     "module": true,
     "require": true,
-    "Buffer": true
+    "Buffer": true,
+    "process": true
   }
 }
