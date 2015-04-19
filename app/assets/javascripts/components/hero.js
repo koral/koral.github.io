@@ -21,16 +21,16 @@ var angle  = 0; // Current angle of the circles
 
 var ringRadius = (index) => CIRCLE_DIAMETER / 2 + CIRCLE_DIAMETER * index * 2;
 
+// Generates suitable amounts of circles for each ring
 var ringCount = function* () {
-  // Minimum amount
-  var current = 9;
+  var current = 9; // Minimum amount
 
   while (true) {
     yield current;
 
     // Find the closest number that divides 360 evenly
     current += 2;
-    while (1440 % current !== 0) current += 1;
+    while ((360 * 10) % current !== 0) current += 1;
   }
 };
 
@@ -70,11 +70,8 @@ var resize = _.throttle(function () {
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.save();
 
-  // Ensure there are enough rings
-  // var extent = ;
-  while (ringRadius(rings.length - 1) < (canvas.width / 2)) {
-    addRing();
-  }
+  // Ensure there are enough rings to fill the screen
+  while (ringRadius(rings.length - 1) < (canvas.width / 2)) addRing();
 }, 100);
 
 var lastFrameTime = Date.now();
