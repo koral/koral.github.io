@@ -1,5 +1,11 @@
 // This file hosts typography-related styles.
 
+// Generic
+
+body {
+  font-weight: $light-font-weight;
+}
+
 h1, h2, h3, h4, h5, h6 {
   color: currentcolor;
   line-height: $text-line-height;

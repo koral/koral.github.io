@@ -1,0 +1,55 @@
+// Variables
+
+$navbar-height: 60px;
+
+// Styles
+
+.navbar {
+  @include clearfix;
+  height: $navbar-height;
+}
+
+  .navbar__list {
+    @extend .list-unstyled;
+    float: left;
+    margin: 0;
+  }
+
+  .navbar__list--right {
+    float: right;
+    text-align: right;
+  }
+
+    .navbar__item {
+      display: inline-block;
+      height: $navbar-height;
+      margin: 0 15px;
+
+      &:before {
+        @include aligner;
+      }
+
+      &:first-child {
+        margin-left: 0;
+      }
+
+      &:last-child {
+        margin-right: 0;
+      }
+    }
+
+      .navbar__link {
+        display: inline-block;
+        height: $navbar-height;
+        line-height: $navbar-height;
+        color: $secondary-text-color;
+
+        &:hover {
+          text-decoration: none;
+        }
+      }
+
+      .navbar__button {
+        display: inline-block;
+        vertical-align: middle;
+      }

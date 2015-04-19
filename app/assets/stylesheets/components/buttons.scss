@@ -1,4 +1,13 @@
-// Styles for buttons
+// Variables
+
+$button-height: 52px;
+$button-small-height: 44px;
+
+$button-padding: 30px;
+$button-background: $primary-color;
+$button-color: white;
+
+// Mixins
 
 @mixin button-states($button-background: $button-background,
                      $button-color: $button-color) {
@@ -8,7 +17,7 @@
   }
 
   &:focus, &:hover {
-    background-color: tint($button-background, 15%);
+    background-color: tint($button-background, 10%);
     color: $button-color;
     text-decoration: none;
   }
@@ -17,6 +26,8 @@
     background-color: $button-background;
   }
 }
+
+// Styles
 
 button, .button {
   @extend %input-base;
@@ -38,7 +49,12 @@ button, .button {
 
   @include button-states;
 
-  &.secondary {
-    @include button-states($unimportant-text-color);
+  &.button--contrast {
+    @include button-states($contrast-color);
+  }
+
+  &.button--small {
+    height: $button-small-height;
+    line-height: $button-small-height;
   }
 }
