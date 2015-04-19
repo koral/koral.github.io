@@ -228,6 +228,10 @@ gulp.task("deploy", ["default"], function () {
 
   if (branch !== "master") throw new Error("Can only deploy from master");
 
+  console.log("Committing the current version of the public directory...");
+  child.execSync("git add public");
+  child.execSync("git commit -m 'Compile public site'");
+
   console.log("Switching to gh-pages...");
   child.execSync("git checkout gh-pages");
 
