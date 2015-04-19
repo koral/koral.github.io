@@ -16,22 +16,33 @@ var circle = document.createElement("img");
 circle.src = "images/circle.svg";
 
 // Circle rings (first one is just the circle)
-var rings = [circle];
-var angle = 0; // Current angle of the circles
+var counts = [0, 9, 12, 15, 18, 20, 24, 30];
+var rings  = [circle];
+var angle  = 0; // Current angle of the circles
 
 var addRing = function () {
   var nextIndex = rings.length;
-  var size      = CIRCLE_DIAMETER + CIRCLE_DIAMETER * nextIndex * 4;
+  var radius    = CIRCLE_DIAMETER / 2 + CIRCLE_DIAMETER * nextIndex * 2;
+  var offset    = radius - CIRCLE_DIAMETER / 2;
+  var count     = counts[nextIndex];
+  if (!count) throw new Error();
+  var step     = 2 * Math.PI / count;
 
   var ringCanvas = document.createElement("canvas");
   var ringCtx    = ringCanvas.getContext("2d");
 
-  ringCanvas.width  = size;
-  ringCanvas.height = size;
+  ringCanvas.width  = radius * 2;
+  ringCanvas.height = radius * 2;
 
-  ringCtx.fillStyle = "rgba(0,0,0,.1)";
+  // Move to the center
+  ringCtx.translate(radius, radius);
 
-  ringCtx.fillRect(0, 0, ringCanvas.width, ringCanvas.height);
+  for (var i = 0; i < count; i += 1) {
+    ringCtx.rotate(step);
+    ringCtx.drawImage(
+      circle, offset - CIRCLE_DIAMETER / 2, -CIRCLE_DIAMETER / 2
+    );
+  }
 
   rings.push(ringCanvas);
 };
@@ -79,12 +90,23 @@ var start = function () {
   // Bind to resize the window and perform it for the first time
   window.addEventListener("resize", fn.fire(resize));
 
-  addRing();
-  addRing();
-  addRing();
-  addRing();
+  if (circle.complete) {
+    next();
+  } else {
+    circle.onload = next;
+  }
 
-  draw();
+  function next () {
+    addRing();
+    addRing();
+    addRing();
+    addRing();
+    addRing();
+    addRing();
+    addRing();
+
+    draw();
+  }
 };
 
 module.exports = { start };
