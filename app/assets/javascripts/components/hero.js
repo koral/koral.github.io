@@ -10,7 +10,7 @@ var ctx       = canvas.getContext("2d");
 
 // Circle image
 const CIRCLE_DIAMETER = 40;
-const ANGULAR_VELOCITY = Math.PI / 25; // Radians/sec
+const ANGULAR_VELOCITY = Math.PI / 40; // Radians/sec
 
 var circle = document.createElement("img");
 circle.src = "images/circle.svg";
@@ -114,6 +114,8 @@ var start = function () {
   function next() {
     // Resize the window and add rings as necessary
     window.addEventListener("resize", fn.fire(resize));
+
+    canvas.classList.add("hero__canvas--running");
 
     // Begin rendering
     draw();

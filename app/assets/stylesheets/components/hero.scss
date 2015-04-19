@@ -13,6 +13,9 @@
 }
 
   .hero__canvas {
+    @include transition(opacity 3s ease);
+    opacity: 0;
+
     position: absolute;
     z-index: 1;
 
@@ -20,6 +23,10 @@
     left: 0;
     width: 100%;
     height: 100%;
+  }
+
+  .hero__canvas--running {
+    opacity: 1;
   }
 
   .hero__inner {
