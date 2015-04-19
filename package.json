@@ -31,6 +31,7 @@
     "vinyl-source-stream": "^1.1.0"
   },
   "dependencies": {
+    "babel": "^5.1.10",
     "lodash": "^3.7.0"
   }
 }

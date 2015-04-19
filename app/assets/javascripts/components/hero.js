@@ -16,17 +16,32 @@ var circle = document.createElement("img");
 circle.src = "images/circle.svg";
 
 // Circle rings (first one is just the circle)
-var counts = [0, 9, 12, 15, 18, 20, 24, 30];
 var rings  = [circle];
 var angle  = 0; // Current angle of the circles
 
+var ringRadius = (index) => CIRCLE_DIAMETER / 2 + CIRCLE_DIAMETER * index * 2;
+
+var ringCount = function* () {
+  // Minimum amount
+  var current = 9;
+
+  while (true) {
+    yield current;
+
+    // Find the closest number that divides 360 evenly
+    current += 2;
+    while (1440 % current !== 0) current += 1;
+  }
+};
+
+var ringCountGenerator = ringCount();
+
 var addRing = function () {
   var nextIndex = rings.length;
-  var radius    = CIRCLE_DIAMETER / 2 + CIRCLE_DIAMETER * nextIndex * 2;
+  var radius    = ringRadius(nextIndex);
   var offset    = radius - CIRCLE_DIAMETER / 2;
-  var count     = counts[nextIndex];
-  if (!count) throw new Error();
-  var step     = 2 * Math.PI / count;
+  var count     = ringCountGenerator.next().value;
+  var step      = 2 * Math.PI / count;
 
   var ringCanvas = document.createElement("canvas");
   var ringCtx    = ringCanvas.getContext("2d");
@@ -54,6 +69,12 @@ var resize = _.throttle(function () {
   ctx.restore();
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.save();
+
+  // Ensure there are enough rings
+  // var extent = ;
+  while (ringRadius(rings.length - 1) < (canvas.width / 2)) {
+    addRing();
+  }
 }, 100);
 
 var lastFrameTime = Date.now();
@@ -87,24 +108,17 @@ var draw = function () {
 };
 
 var start = function () {
-  // Bind to resize the window and perform it for the first time
-  window.addEventListener("resize", fn.fire(resize));
-
   if (circle.complete) {
     next();
   } else {
     circle.onload = next;
   }
 
-  function next () {
-    addRing();
-    addRing();
-    addRing();
-    addRing();
-    addRing();
-    addRing();
-    addRing();
+  function next() {
+    // Resize the window and add rings as necessary
+    window.addEventListener("resize", fn.fire(resize));
 
+    // Begin rendering
     draw();
   }
 };
