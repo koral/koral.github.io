@@ -42,7 +42,9 @@ $navbar-height: 60px;
         display: inline-block;
         height: $navbar-height;
         line-height: $navbar-height;
+
         color: $secondary-text-color;
+        font-weight: $light-font-weight;
 
         &:hover {
           text-decoration: none;

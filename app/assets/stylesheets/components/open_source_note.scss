@@ -1,0 +1,38 @@
+// Styles for the open source note on the landing page
+
+.open-source-note {
+  background-color: $contrast-color;
+  color: white;
+  height: 434px;
+  text-align: center;
+
+  margin-top: 180px;
+
+  &:before {
+    @include aligner;
+  }
+}
+
+  .open-source-note__inner {
+    display: inline-block;
+    vertical-align: middle;
+
+    h2 {
+      font-weight: $light-font-weight;
+    }
+
+    p {
+      font-size: $bigger-text;
+      font-weight: $thin-font-weight;
+    }
+
+    img {
+      vertical-align: -3px;
+      margin-left: 10px;
+      margin-right: 5px;
+    }
+
+    a {
+      color: white;
+    }
+  }
