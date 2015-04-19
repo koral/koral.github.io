@@ -16,8 +16,7 @@ var circle = document.createElement("img");
 circle.src = "images/circle.svg";
 
 // Circle rings (first one is just the circle)
-var rings  = [circle];
-var angle  = 0; // Current angle of the circles
+var rings  = [{ object: circle, angle: 0 }];
 
 var ringRadius = (index) => CIRCLE_DIAMETER / 2 + CIRCLE_DIAMETER * index * 2;
 
@@ -59,7 +58,7 @@ var addRing = function () {
     );
   }
 
-  rings.push(ringCanvas);
+  rings.push({ object: ringCanvas, angle: 0 });
 };
 
 var resize = _.throttle(function () {
@@ -82,21 +81,21 @@ var draw = function () {
 
   var angularDelta = ANGULAR_VELOCITY * (delta / 1000);
 
-  angle += angularDelta;
-
-  // Reset when overflowing
-  if (angle > Math.PI * 2) angle -= Math.PI * 2;
-
   ctx.clearRect(
     -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height
   );
 
   _.each(rings, (ring, index) => {
-    var direction = index % 2 === 0 ? 1 : -1;
+    var direction = 1;
+
+    ring.angle += angularDelta / (index / 5);
+
+    // Reset when overflowing
+    if (ring.angle > Math.PI * 2) ring.angle -= Math.PI * 2;
 
     ctx.save();
-    ctx.rotate(angle * direction);
-    ctx.drawImage(ring, -ring.width / 2, -ring.height / 2);
+    ctx.rotate(ring.angle * direction);
+    ctx.drawImage(ring.object, -ring.object.width / 2, -ring.object.height / 2);
     ctx.restore();
   });
 
