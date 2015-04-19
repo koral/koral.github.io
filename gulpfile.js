@@ -249,6 +249,7 @@ gulp.task("deploy", ["default"], function () {
     "gulpfile.js",
     "bower.json",
     "package.json",
+    "README.md",
   ]);
 
   console.log("Committing...");
