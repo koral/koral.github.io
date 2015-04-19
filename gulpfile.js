@@ -10,6 +10,7 @@ var del        = require("del");
 var ghaml      = require("gulp-haml");
 var glob       = require("gulp-css-globbing");
 var gulp       = require("gulp");
+var gutil      = require("gulp-util");
 var haml       = require("haml");
 var header     = require("gulp-header");
 var kexec      = require("kexec");
@@ -21,6 +22,7 @@ var notify     = require("gulp-notify");
 var plumber    = require("gulp-plumber");
 var sass       = require("gulp-sass");
 var source     = require("vinyl-source-stream");
+var uglify     = require("gulp-uglify");
 
 var CONFIG = {
   PATHS: {
@@ -63,11 +65,20 @@ var CONFIG = {
   },
 };
 
+// Environment
+
+process.env.NODE_ENV = process.env.NODE_ENV || "development";
+var production       = process.env.NODE_ENV === "production";
+
+/* eslint-disable no-console */
+if (production) console.warn("Running in the 'production' environment.");
+/* eslint-enable */
+
 // Helpers
 
 var notice = function (location) {
   return header([
-    "/* Don't edit this file. Make changes in",
+    "/* NOTE: Don't edit this file. Work from",
     location,
     "instead. */\n",
   ].join(" "));
@@ -82,6 +93,10 @@ var error = function () {
 
 var errorHandler = function () {
   return plumber({ errorHandler: error() });
+};
+
+var devLivereload = function () {
+  return production ? gutil.noop() : livereload();
 };
 
 // Tasks
@@ -103,7 +118,7 @@ gulp.task("views", function () {
         callback(null, file);
       }))
       .pipe(gulp.dest(CONFIG.VIEWS.DEST))
-      .pipe(livereload());
+      .pipe(devLivereload());
 });
 
 gulp.task("stylesheets", function () {
@@ -117,14 +132,14 @@ gulp.task("stylesheets", function () {
           CONFIG.BOWER.DEST + "/bourbon/app/assets/stylesheets",
         ],
       }))
-      .pipe(minify({ keepSpecialComments: 0 }))
       .pipe(notice(CONFIG.STYLESHEETS.SRC))
+      .pipe(production ? minify({ keepSpecialComments: 0 }) : gutil.noop())
       .pipe(gulp.dest(CONFIG.STYLESHEETS.DEST))
-      .pipe(livereload());
+      .pipe(devLivereload());
 });
 
 gulp.task("javascripts", function () {
-  var bundler = browserify({
+  var src = browserify({
     entries:    [
       "./" + CONFIG.JAVASCRIPTS.SRC + "/" + CONFIG.JAVASCRIPTS.DEFAULT
     ],
@@ -132,17 +147,19 @@ gulp.task("javascripts", function () {
     debug:      true,
   });
 
-  bundler.transform(babelify.configure({
+  src.transform(babelify.configure({
     sourceMapRelative: __dirname + CONFIG.JAVASCRIPTS.SRC,
     blacklist:         ["useStrict"],
   }));
 
-
-  return bundler.bundle()
-                .on("error", error())
-                .pipe(source(CONFIG.JAVASCRIPTS.DEFAULT))
-                .pipe(buffer())
-                .pipe(gulp.dest(CONFIG.JAVASCRIPTS.DEST));
+  return src.bundle()
+            .on("error", error())
+            .pipe(source(CONFIG.JAVASCRIPTS.DEFAULT))
+            .pipe(buffer())
+            .pipe(notice(CONFIG.JAVASCRIPTS.SRC))
+            .pipe(production ? uglify() : gutil.noop())
+            .pipe(gulp.dest(CONFIG.JAVASCRIPTS.DEST))
+            .pipe(devLivereload());
 });
 
 gulp.task("images", function () {
@@ -198,8 +215,13 @@ gulp.task("dev", ["watch"], function () {
   /* eslint-enable */
 });
 
-gulp.task("deploy", function () {
+gulp.task("deploy", ["default"], function () {
   /* eslint-disable no-console */
+  if (!production) {
+    console.log("Re-running the task in the production environment...");
+    kexec("NODE_ENV=production " + process.argv.join(" "));
+  }
+
   var branch = child.execSync("git symbolic-ref --short -q HEAD 2>/dev/null")
                     .toString()
                     .trim();
