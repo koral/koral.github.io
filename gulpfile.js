@@ -2,7 +2,10 @@ var fs    = require("fs");
 var path  = require("path");
 var child = require("child_process");
 
+var babelify   = require("babelify");
 var bower      = require("gulp-bower");
+var browserify = require("browserify");
+var buffer     = require("vinyl-buffer");
 var del        = require("del");
 var ghaml      = require("gulp-haml");
 var glob       = require("gulp-css-globbing");
@@ -17,6 +20,7 @@ var notifier   = require("node-notifier");
 var notify     = require("gulp-notify");
 var plumber    = require("gulp-plumber");
 var sass       = require("gulp-sass");
+var source     = require("vinyl-source-stream");
 
 var CONFIG = {
   PATHS: {
@@ -38,8 +42,9 @@ var CONFIG = {
     DEST: "public/stylesheets",
   },
   JAVASCRIPTS: {
-    SRC:  "app/assets/javascripts",
-    DEST: "public/javascripts",
+    SRC:     "app/assets/javascripts",
+    DEFAULT: "index.js",
+    DEST:    "public/javascripts",
   },
   IMAGES: {
     SRC:  "app/assets/images",
@@ -48,6 +53,10 @@ var CONFIG = {
   FONTS: {
     SRC:  "app/assets/fonts",
     DEST: "public/fonts",
+  },
+  STATIC: {
+    SRC:  "static",
+    DEST: "public",
   },
   BOWER: {
     DEST: "bower_components",
@@ -64,13 +73,15 @@ var notice = function (location) {
   ].join(" "));
 };
 
-var errorHandler = function () {
-  return plumber({
-    errorHandler: notify.onError({
-      sound:   "Glass",
-      message: "Error: <%= error.message %>",
-    }),
+var error = function () {
+  return notify.onError({
+    sound:   "Glass",
+    message: "Error: <%= error.message %>",
   });
+};
+
+var errorHandler = function () {
+  return plumber({ errorHandler: error() });
 };
 
 // Tasks
@@ -113,11 +124,25 @@ gulp.task("stylesheets", function () {
 });
 
 gulp.task("javascripts", function () {
-  gulp.src(CONFIG.JAVASCRIPTS.SRC  + "/index.js")
-      .pipe(errorHandler())
-      .pipe(notice(CONFIG.JAVASCRIPTS.SRC))
-      .pipe(gulp.dest(CONFIG.JAVASCRIPTS.DEST))
-      .pipe(livereload());
+  var bundler = browserify({
+    entries:    [
+      "./" + CONFIG.JAVASCRIPTS.SRC + "/" + CONFIG.JAVASCRIPTS.DEFAULT
+    ],
+    extensions: [".jsx"],
+    debug:      true,
+  });
+
+  bundler.transform(babelify.configure({
+    sourceMapRelative: __dirname + CONFIG.JAVASCRIPTS.SRC,
+    blacklist:         ["useStrict"],
+  }));
+
+
+  return bundler.bundle()
+                .on("error", error())
+                .pipe(source(CONFIG.JAVASCRIPTS.DEFAULT))
+                .pipe(buffer())
+                .pipe(gulp.dest(CONFIG.JAVASCRIPTS.DEST));
 });
 
 gulp.task("images", function () {
@@ -130,8 +155,13 @@ gulp.task("fonts", function () {
       .pipe(gulp.dest(CONFIG.FONTS.DEST));
 });
 
+gulp.task("static", function () {
+  gulp.src(CONFIG.STATIC.SRC + "/**/*")
+      .pipe(gulp.dest(CONFIG.STATIC.DEST));
+});
+
 gulp.task("default", [
-  "bower", "views", "stylesheets", "javascripts", "images", "fonts"
+  "bower", "views", "stylesheets", "javascripts", "images", "fonts", "static"
 ]);
 
 gulp.task("reload", function () {
@@ -154,7 +184,8 @@ gulp.task("watch", ["default"], function () {
   gulp.watch(CONFIG.STYLESHEETS.SRC + "/**/*.scss", ["stylesheets"]);
   gulp.watch(CONFIG.JAVASCRIPTS.SRC + "/**/*.js",   ["javascripts"]);
   gulp.watch(CONFIG.IMAGES.SRC + "/**/*",           ["images"]);
-  gulp.watch(CONFIG.FONTS.SRC + "/**/*",           ["fonts"]);
+  gulp.watch(CONFIG.FONTS.SRC + "/**/*",            ["fonts"]);
+  gulp.watch(CONFIG.STATIC.SRC + "/**/*",           ["static"]);
 
   gulp.watch(CONFIG.PATHS.GULPFILE, ["reload"]);
 });

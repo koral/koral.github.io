@@ -6,7 +6,9 @@
   "author": "Gabriele Cirulli",
   "license": "MIT",
   "devDependencies": {
+    "babelify": "^6.0.2",
     "bower": "^1.4.1",
+    "browserify": "^9.0.8",
     "del": "^1.1.1",
     "gulp": "^3.8.11",
     "gulp-bower": "0.0.10",
@@ -22,6 +24,8 @@
     "http-server": "^0.8.0",
     "kexec": "^1.2.0",
     "map-stream": "0.0.5",
-    "node-notifier": "^4.2.1"
+    "node-notifier": "^4.2.1",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
   }
 }

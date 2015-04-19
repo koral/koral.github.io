@@ -71,6 +71,7 @@
     "module": true,
     "require": true,
     "Buffer": true,
-    "process": true
+    "process": true,
+    "__dirname": true
   }
 }
