@@ -12,10 +12,18 @@
   }
 }
 
-  .hero__canvas {
-    @include transition(opacity 3s ease);
+.hero--ready {}
+
+  .hero__canvas, .hero__inner {
     opacity: 0;
 
+    .hero--ready & {
+      opacity: 1;
+    }
+  }
+
+  .hero__canvas {
+    @include transition(opacity 2s ease);
     position: absolute;
     z-index: 1;
 
@@ -25,17 +33,20 @@
     height: 100%;
   }
 
-  .hero__canvas--running {
-    opacity: 1;
-  }
-
   .hero__inner {
+    @include transition(all 1s ease);
     position: relative;
     z-index: 2;
 
     display: inline-block;
     vertical-align: middle;
     color: white;
+
+    @include transform(translateY(20px));
+
+    .hero--ready & {
+      @include transform(translateY(0));
+    }
   }
 
     .hero__title {

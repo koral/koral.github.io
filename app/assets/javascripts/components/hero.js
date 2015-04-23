@@ -114,7 +114,7 @@ var start = function () {
     // Resize the window and add rings as necessary
     window.addEventListener("resize", fn.fire(resize));
 
-    canvas.classList.add("hero__canvas--running");
+    container.classList.add("hero--ready");
 
     // Begin rendering
     draw();
