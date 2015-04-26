@@ -10,6 +10,7 @@
   ],
   "dependencies": {
     "bootstrap-sass-official": "~3.3.4",
-    "bourbon": "~4.2.2"
+    "bourbon": "~4.2.2",
+    "paper": "~0.9.22"
   }
 }

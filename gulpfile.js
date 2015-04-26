@@ -5,6 +5,7 @@ var child = require("child_process");
 var babelify   = require("babelify");
 var bower      = require("gulp-bower");
 var browserify = require("browserify");
+var debowerify = require("debowerify");
 var buffer     = require("vinyl-buffer");
 var del        = require("del");
 var ghaml      = require("gulp-haml");
@@ -147,10 +148,12 @@ gulp.task("javascripts", function () {
     debug:      true,
   });
 
-  src.transform(babelify.configure({
-    sourceMapRelative: __dirname + CONFIG.JAVASCRIPTS.SRC,
-    blacklist:         ["useStrict"],
-  }));
+  src
+    .transform(babelify.configure({
+      sourceMapRelative: __dirname + CONFIG.JAVASCRIPTS.SRC,
+      ignore:            [/bower_components/g],
+    }))
+    .transform(debowerify);
 
   return src.bundle()
             .on("error", error())
