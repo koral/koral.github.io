@@ -1,27 +1,27 @@
 // Animation for the landing page hero
 
-var _ = require("lodash");
+var _     = require("lodash");
+var paper = require("paper");
 
 var fn = require("koral-util/fn");
 
 var container = document.querySelector("#hero");
 var canvas    = document.querySelector("#hero-canvas");
-var ctx       = canvas.getContext("2d");
 
-// Circle image
-const CIRCLE_DIAMETER = 40;
+// Circle parameters
 const ANGULAR_VELOCITY = Math.PI / 40; // Radians/sec
+const CIRCLE_RADIUS    = 20;
+const CIRCLE_COLOR     = "rgba(0,0,0,.1)";
 
-var circle = document.createElement("img");
-circle.src = "images/circle.svg";
+// Circle rings
+var rings  = [];
+var circle = null;
 
-// Circle rings (first one is just the circle)
-var rings  = [{ object: circle, angle: 0 }];
-
-var ringRadius = (index) => CIRCLE_DIAMETER / 2 + CIRCLE_DIAMETER * index * 2;
+var ringRadius = (index) => CIRCLE_RADIUS + CIRCLE_RADIUS * index * 4;
+var ringOffset = (index) => ringRadius(index) - CIRCLE_RADIUS;
 
 // Generates suitable amounts of circles for each ring
-var ringCount = function* () {
+var ringCountGenerator = function* () {
   var current = 9; // Minimum amount
 
   while (true) {
@@ -33,92 +33,89 @@ var ringCount = function* () {
   }
 };
 
-var ringCountGenerator = ringCount();
+var ringCount = ringCountGenerator();
 
 var addRing = function () {
   var nextIndex = rings.length;
-  var radius    = ringRadius(nextIndex);
-  var offset    = radius - CIRCLE_DIAMETER / 2;
-  var count     = ringCountGenerator.next().value;
-  var step      = 2 * Math.PI / count;
 
-  var ringCanvas = document.createElement("canvas");
-  var ringCtx    = ringCanvas.getContext("2d");
+  var items = null;
 
-  ringCanvas.width  = radius * 2;
-  ringCanvas.height = radius * 2;
+  if (nextIndex === 0) {
+    items = [circle.place()];
+  } else {
+    var offset = ringOffset(nextIndex);
+    var count  = ringCount.next().value;
 
-  // Move to the center
-  ringCtx.translate(radius, radius);
-
-  for (var i = 0; i < count; i += 1) {
-    ringCtx.rotate(step);
-    ringCtx.drawImage(
-      circle, offset - CIRCLE_DIAMETER / 2, -CIRCLE_DIAMETER / 2
-    );
+    items = _.times(count, () => {
+      return circle.place();
+    });
   }
 
-  rings.push({ object: ringCanvas, angle: 0 });
-};
+  // Add the new ring
+  rings.push({ items, angle: 0 });
+}
 
 var resize = _.throttle(function () {
   canvas.width = container.offsetWidth;
   canvas.height = container.offsetHeight;
 
-  ctx.restore();
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-  ctx.save();
+  paper.view.viewSize = new paper.Size(canvas.width, canvas.height);
 
   // Ensure there are enough rings to fill the screen
   while (ringRadius(rings.length - 1) < (canvas.width / 2)) addRing();
-}, 100);
+});
 
-var lastFrameTime = Date.now();
+var draw = function (e) {
+  var angularDelta = ANGULAR_VELOCITY * (e.delta);
 
-var draw = function () {
-  var currentTime = Date.now();
-  var delta       = currentTime - lastFrameTime;
+  // Special case to position the middle circle (ring 0)
+  rings[0].items[0].position = paper.view.center;
 
-  var angularDelta = ANGULAR_VELOCITY * (delta / 1000);
-
-  ctx.clearRect(
-    -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height
-  );
-
+  // Draw each circle in each ring in the right place, skipping ring 0 (the
+  // middle cirlce)
   _.each(rings, (ring, index) => {
-    var direction = 1;
+    if (index === 0) return;
 
+    var offset = ringOffset(index);
+    var count  = ring.items.length;
+    var step   = 2 * Math.PI / count;
+
+    // Apply a modifier on the angular velocity inversely proportional to the
+    // current index
     ring.angle += angularDelta / (index / 5);
 
     // Reset when overflowing
     if (ring.angle > Math.PI * 2) ring.angle -= Math.PI * 2;
 
-    ctx.save();
-    ctx.rotate(ring.angle * direction);
-    ctx.drawImage(ring.object, -ring.object.width / 2, -ring.object.height / 2);
-    ctx.restore();
-  });
+    // Position every circle in the right place
+    for (let i = 0; i < count; i++) {
+      let angle = i * step + ring.angle;
+      let circle = ring.items[i];
 
-  lastFrameTime = currentTime;
-  requestAnimationFrame(draw);
+      circle.position.x = paper.view.center.x + Math.cos(angle) * offset;
+      circle.position.y = paper.view.center.y + Math.sin(angle) * offset;
+    }
+  });
+};
+
+var setup = function () {
+  paper.setup(canvas);
+
+  circle = new paper.Symbol(paper.Path.Circle({
+    radius: CIRCLE_RADIUS,
+    fillColor: CIRCLE_COLOR,
+  }));
+
+  // Bind the onFrame method
+  paper.view.onFrame = draw;
+
+  // Handle resizing
+  window.addEventListener("resize", fn.fire(resize));
 };
 
 var start = function () {
-  if (circle.complete) {
-    next();
-  } else {
-    circle.onload = next;
-  }
-
-  function next() {
-    // Resize the window and add rings as necessary
-    window.addEventListener("resize", fn.fire(resize));
-
-    container.classList.add("hero--ready");
-
-    // Begin rendering
-    draw();
-  }
+  setup();
+  container.classList.add("hero--ready");
 };
 
 module.exports = { start };
