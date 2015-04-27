@@ -229,16 +229,16 @@ gulp.task("deploy", ["default"], function () {
                     .toString()
                     .trim();
 
-  if (branch !== "master") throw new Error("Can only deploy from master");
+  if (branch !== "source") throw new Error("Can only deploy from `source`");
 
   console.log("Committing the current version of the public directory...");
   child.execSync("git add public");
   child.execSync("git commit -m 'Compile public site'");
 
-  console.log("Switching to gh-pages...");
-  child.execSync("git checkout gh-pages");
+  console.log("Switching to master...");
+  child.execSync("git checkout master");
 
-  console.log("Adding contents of master into gh-pages...");
+  console.log("Adding contents of master into master...");
   child.execSync("git checkout master -- public");
 
   console.log("Moving the contents of the public directory to the root...");
@@ -257,10 +257,10 @@ gulp.task("deploy", ["default"], function () {
 
   console.log("Committing...");
   child.execSync("git add .");
-  child.execSync("git commit -am 'Update gh-pages'");
+  child.execSync("git commit -am 'Update master'");
 
   console.log("Pushing...");
-  child.execSync("git push origin gh-pages");
+  child.execSync("git push origin master");
 
   console.log("Switching back to " + branch + "...");
   child.execSync("git checkout master");
