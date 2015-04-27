@@ -6,6 +6,8 @@
 
 ## How this repository works
 
-Since for organization repositories GitHub requires the `master` branch to be the one representing the domain on GitHub pages (which we use to power [koral.io](http://koral.io)), this repository works in a slightly different way. **`source`** is the **default branch.**. **`master`** is the branch that represents the GitHub pages site. To make changes, we edit the contents of the `source` branch, then build it for GitHub Pages using the command `gulp deploy`. 
+For organization repositories GitHub requires the `master` branch to be the one representing the domain on GitHub Pages (which we use to power [koral.io](http://koral.io)).
 
-Please do not make changes directly to **master.**
+This repository works in a slightly different way to accomodate that: **`source`** is the default branch, while **`master`** represents the GitHub Pages site.
+
+To make changes, edit the contents of the `source` branch, then build it for GitHub Pages using the command `gulp deploy`. Never make edits **directly on `master`.**
