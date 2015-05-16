@@ -1,7 +1,8 @@
 // Animation for the landing page hero
 
-var _     = require("lodash");
-var paper = require("paper");
+var _       = require("lodash");
+var paperjs = require("paper");
+var paper   = new paperjs.PaperScope();
 
 var fn = require("koral-util/fn");
 
@@ -98,7 +99,6 @@ var update = function (e) {
 };
 
 var setup = function () {
-  paper = new paper.PaperScope();
   paper.setup(canvas);
 
   circle = new paper.Symbol(new paper.Path.Circle({
