@@ -43,7 +43,6 @@ var addRing = function () {
   if (nextIndex === 0) {
     items = [circle.place()];
   } else {
-    var offset = ringOffset(nextIndex);
     var count  = ringCount.next().value;
 
     items = _.times(count, () => {
@@ -53,7 +52,7 @@ var addRing = function () {
 
   // Add the new ring
   rings.push({ items, angle: 0 });
-}
+};
 
 var resize = _.throttle(function () {
   canvas.width = container.offsetWidth;
@@ -88,7 +87,7 @@ var draw = function (e) {
     if (ring.angle > Math.PI * 2) ring.angle -= Math.PI * 2;
 
     // Position every circle in the right place
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < count; i += 1) {
       let angle = i * step + ring.angle;
       let circle = ring.items[i];
 
@@ -101,7 +100,7 @@ var draw = function (e) {
 var setup = function () {
   paper.setup(canvas);
 
-  circle = new paper.Symbol(paper.Path.Circle({
+  circle = new paper.Symbol(new paper.Path.Circle({
     radius: CIRCLE_RADIUS,
     fillColor: CIRCLE_COLOR,
   }));
