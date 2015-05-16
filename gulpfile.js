@@ -238,8 +238,8 @@ gulp.task("deploy", ["default"], function () {
   console.log("Switching to master...");
   child.execSync("git checkout master");
 
-  console.log("Adding contents of master into master...");
-  child.execSync("git checkout master -- public");
+  console.log("Adding contents of source into master...");
+  child.execSync("git checkout source -- public");
 
   console.log("Moving the contents of the public directory to the root...");
   child.execSync("rsync -a " + CONFIG.PATHS.PUBLIC + "/ .");
@@ -263,7 +263,7 @@ gulp.task("deploy", ["default"], function () {
   child.execSync("git push origin master");
 
   console.log("Switching back to " + branch + "...");
-  child.execSync("git checkout master");
+  child.execSync("git checkout " + branch);
   /* eslint-enable */
 });
 
