@@ -123,10 +123,9 @@ var prepareComponents = function () {
       ready = true; // Ready to start drawing
     });
   });
-
 };
 
-var setup = function () {
+var start = function () {
   paper = new paper.PaperScope();
   paper.setup(canvas);
 
@@ -141,10 +140,6 @@ var setup = function () {
   // Bind the onFrame method
   paper.view.onFrame = update;
   setInterval(addScreenShape, SCREEN_SHAPE_INTERVAL);
-};
-
-var start = function () {
-  setup();
 };
 
 module.exports = { start };
