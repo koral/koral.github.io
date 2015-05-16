@@ -3,4 +3,5 @@ require("babel/polyfill");
 
 document.addEventListener("DOMContentLoaded", function () {
   require("./components/hero").start();
+  require("./components/train").start();
 });

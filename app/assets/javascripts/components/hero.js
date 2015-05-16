@@ -21,7 +21,7 @@ var ringRadius = (index) => CIRCLE_RADIUS + CIRCLE_RADIUS * index * 4;
 var ringOffset = (index) => ringRadius(index) - CIRCLE_RADIUS;
 
 // Generates suitable amounts of circles for each ring
-var ringCountGenerator = function* () {
+var generateRingCount = function* () {
   var current = 9; // Minimum amount
 
   while (true) {
@@ -33,7 +33,7 @@ var ringCountGenerator = function* () {
   }
 };
 
-var ringCount = ringCountGenerator();
+var ringCountGenerator = generateRingCount();
 
 var addRing = function () {
   var nextIndex = rings.length;
@@ -43,7 +43,7 @@ var addRing = function () {
   if (nextIndex === 0) {
     items = [circle.place()];
   } else {
-    var count  = ringCount.next().value;
+    var count  = ringCountGenerator.next().value;
 
     items = _.times(count, () => {
       return circle.place();
@@ -64,7 +64,7 @@ var resize = _.throttle(function () {
   while (ringRadius(rings.length - 1) < (canvas.width / 2)) addRing();
 });
 
-var draw = function (e) {
+var update = function (e) {
   var angularDelta = ANGULAR_VELOCITY * (e.delta);
 
   // Special case to position the middle circle (ring 0)
@@ -98,6 +98,7 @@ var draw = function (e) {
 };
 
 var setup = function () {
+  paper = new paper.PaperScope();
   paper.setup(canvas);
 
   circle = new paper.Symbol(new paper.Path.Circle({
@@ -106,7 +107,7 @@ var setup = function () {
   }));
 
   // Bind the onFrame method
-  paper.view.onFrame = draw;
+  paper.view.onFrame = update;
 
   // Handle resizing
   window.addEventListener("resize", fn.fire(resize));
