@@ -4,52 +4,63 @@ var _       = require("lodash");
 var paperjs = require("paper");
 var paper   = new paperjs.PaperScope();
 
-var canvas = document.querySelector("#train-canvas");
+window.paper = paper;
 
-const TRAIN_FILL                   = "#ed3832";
+var canvas = document.querySelector("#train-canvas");
 
 // Most values are constants to avoid debugging nightmares
 
-const TRAIN_WIDTH           = 380;
-const TRAIN_HEIGHT          = 1051;
+const TRAIN_FILL              = "#ed3832";
 
-const APP_IMAGE             = "/images/train_application.svg";
-const SCREEN_MASK_IMAGE     = "/images/train_screen_mask.svg";
-const BACKGROUND_IMAGE      = "/images/train_background.svg";
+const ANIMATION_SPEED         = 1;
 
-const WIRE_Y                = 696.5;
-const WIRE_HEIGHT           = 219;
-const WIRE_MASK_HEIGHT      = WIRE_HEIGHT + 100;
+const TRAIN_WIDTH             = 380;
+const TRAIN_HEIGHT            = 1051;
 
-const APP_Y                 = 488;
-const APP_WIDTH             = TRAIN_WIDTH;
+const APP_IMAGE               = "/images/train_application.svg";
+const SCREEN_MASK_IMAGE       = "/images/train_screen_mask.svg";
+const BACKGROUND_IMAGE        = "/images/train_background.svg";
 
-const APP_RECT_WIDTH        = 70;
-const APP_RECT_MIN_HEIGHT   = 40;
-const APP_RECT_MAX_HEIGHT   = 120;
-const APP_RECT_HEIGHT_STEP  = 20;
-const APP_RECT_MARGIN       = 5;
-const APP_RECT_START_X      = 12;
-const APP_RECT_START_Y      = 421;
+const WIRE_Y                  = 696.5;
+const WIRE_HEIGHT             = 219;
+const WIRE_MASK_HEIGHT        = WIRE_HEIGHT + 100;
 
-const SCREEN_WIDTH          = 264;
-const SCREEN_HEIGHT         = 154;
-const SCREEN_MARGIN         = 30;
-const SCREEN_LANES          = 5;
-const SCREEN_LANE_RANDOM    = 18;
+const APP_Y                   = 488;
+const APP_WIDTH               = TRAIN_WIDTH;
 
-const SCREEN_MASK_X         = 190;
-const SCREEN_MASK_Y         = 891;
-const SCREEN_MASK_INSET     = 12;
+const APP_RECT_WIDTH          = 70;
+const APP_RECT_MIN_HEIGHT     = 40;
+const APP_RECT_MAX_HEIGHT     = 120;
+const APP_RECT_HEIGHT_STEP    = 20;
+const APP_RECT_MARGIN         = 5;
+const APP_RECT_START_X        = 12;
+const APP_RECT_START_Y        = 421;
 
-const WIRE_APP_MASK_X       = TRAIN_WIDTH / 2;
-const WIRE_APP_MASK_Y       = 487;
+const APP_RECT_ANIMATION_TIME = 0.3 * ANIMATION_SPEED; // s
 
-const SHAPE_SPEED           = 80; // px/sec
-const SCREEN_SHAPE_INTERVAL = 250;
+const APP_MASK_WIDTH          = 370;
+const APP_MASK_HEIGHT         = 168;
+const APP_MASK_Y              = 505;
 
-const SYMBOL_STROKE_WIDTH   = 3.2;
-const SYMBOL_ATTRIBUTES     = {
+const SCREEN_WIDTH            = 264;
+const SCREEN_HEIGHT           = 154;
+const SCREEN_MARGIN           = 30;
+const SCREEN_LANES            = 5;
+const SCREEN_LANE_RANDOM      = 18;
+
+const SCREEN_MASK_X           = 190;
+const SCREEN_MASK_Y           = 891;
+const SCREEN_MASK_INSET       = 12;
+
+const WIRE_APP_MASK_X         = TRAIN_WIDTH / 2;
+const WIRE_APP_MASK_Y         = 487;
+
+const SHAPE_SPEED             = 80 / ANIMATION_SPEED; // px/sec
+const RECT_SPEED              = 80 / ANIMATION_SPEED;
+const SCREEN_SHAPE_INTERVAL   = 250 * ANIMATION_SPEED;
+
+const SYMBOL_STROKE_WIDTH     = 3.2;
+const SYMBOL_ATTRIBUTES       = {
   fillColor:   TRAIN_FILL,
   strokeColor: "white",
   strokeWidth: SYMBOL_STROKE_WIDTH,
@@ -60,18 +71,20 @@ var background;
 var screenMask;
 var symbolNames;
 
-var symbols            = {};
-var lastSymbolInLane   = [];
-var screenSymbols      = [];
+var symbols          = {};
+var lastSymbolInLane = [];
+var screenSymbols    = [];
 
 var wireGroup;
 var wireMask;
-var wireSymbols        = [];
+var wireSymbols      = [];
 
-var applicationRects   = [];
-var applicationSymbols = [];
+var appGroup;
+var morph            = {};
+var appRects         = [];
+var appSymbols       = [];
 
-var ready              = false;
+var ready            = false;
 
 // Generates lanes in a way that is guaranteed to distribute items througout
 // the screen without repetition
@@ -137,6 +150,36 @@ var addToWire = function (shape) {
   shape.position.y = WIRE_Y + WIRE_HEIGHT / 2 + shape.bounds.height / 2;
 };
 
+var startMorph = function (shape) {
+
+};
+
+var appRectStartPosition = function (rect) {
+  return new paper.Point(
+    APP_RECT_START_X + APP_RECT_WIDTH / 2,
+    APP_RECT_START_Y + rect.bounds.height / 2
+  );
+};
+
+var addToApp = function (rect) {
+  var latest = appRects[0];
+
+  var position = appRectStartPosition(rect);
+
+  if (latest) {
+    rect.position = [
+      latest.position.x - latest.bounds.width - APP_RECT_MARGIN * 2,
+      position.y,
+    ];
+  } else {
+    rect.position = position;
+  }
+
+  appGroup.addChild(rect);
+
+  appRects.unshift(rect);
+};
+
 var updateScreen = function (e) {
   _.remove(screenSymbols, (shape) => {
     var position = shape.position.y -= SHAPE_SPEED * e.delta;
@@ -151,32 +194,108 @@ var updateScreen = function (e) {
 
 var updateWire = function (e) {
   _.remove(wireSymbols, (shape) => {
-    var position = shape.position.y -= SHAPE_SPEED * e.delta;
+    shape.position.y -= SHAPE_SPEED * e.delta;
 
-    if (shape.position.y < WIRE_Y - WIRE_HEIGHT / 2) {
-      // Consider shape for jumping
-      shape.remove();
-      return true;
+    if (!morph.ongoing && (shape.position.y < WIRE_Y - WIRE_HEIGHT / 2)) {
+      var latest = appRects[0];
+
+      // What will be the distance of the latest when the anim's over?
+      var animationDelta = RECT_SPEED / APP_RECT_ANIMATION_TIME;
+
+      if (!latest || (latest.position.x + animationDelta -
+          APP_RECT_WIDTH * 1.5 - APP_RECT_MARGIN * 2 >= APP_RECT_START_X)) {
+
+        // We should start the morph animation, to transform this shape into
+        // one of the rects on the "app" screen.
+
+        var nextSymbol;
+
+        do {
+          nextSymbol = _.sample(appSymbols);
+        } while (latest && (nextSymbol === latest.symbol));
+
+        morph.ongoing = true;
+        morph.rect    = nextSymbol.place();
+        morph.shape   = shape;
+
+        // Put rect in the final position
+        morph.rect.position = appRectStartPosition(morph.rect);
+
+        morph.matrix  = morph.rect.matrix.clone();
+
+        morph.start   = shape.position.clone();
+        morph.current = morph.start;
+        morph.target  = morph.rect.position.clone();
+
+        // Calculate the vector
+        morph.vector = morph.target.subtract(shape.position);
+        morph.length = morph.vector.length;
+        morph.speed  = morph.length / APP_RECT_ANIMATION_TIME;
+
+        morph.rect.position = morph.start;
+        // morph.rect.scale(0);
+
+        // Finally, remove this shape from wireSymbols
+        return true;
+      }
     }
   });
 };
 
-var updateApplication = function (e) {
-  var last = applicationRects[0];
+var updateMorph = function (e) {
+  if (!morph.shape || !morph.ongoing) return;
 
-  if (last === undefined ||
-      last.position.x - APP_RECT_WIDTH * 1.5 - APP_RECT_MARGIN * 2) {
-    var placed = _.sample(applicationSymbols).place();
+  var segment = new paper.Point({
+    length: e.delta * morph.speed,
+    angle:  morph.vector.angle,
+  });
 
-    placed.position = [
-      APP_RECT_START_X + APP_RECT_WIDTH / 2,
-      APP_RECT_START_Y + placed.bounds.height / 2,
-    ];
+  morph.current = morph.current.add(segment);
 
-    applicationRects.unshift(placed);
+  var angle = morph.current.getDirectedAngle(morph.target);
+  var distance = morph.current.getDistance(morph.target);
+
+  var shapeScale = distance / morph.length;
+  var rectScale  = Math.abs(shapeScale - 1);
+
+  morph.rect.matrix = morph.matrix.clone();
+  morph.shape.matrix = morph.matrix.clone();
+
+  morph.rect.scale(rectScale);
+  morph.shape.scale(shapeScale);
+
+  morph.rect.position = morph.current;
+  morph.shape.position = morph.current;
+
+  if (Math.abs(distance) < 2 || angle < 0) {
+    morph.ongoing = false;
+    addToApp(morph.rect);
   }
-  _.each(applicationRects, (rect) => {
-    rect.position.x += SHAPE_SPEED * e.delta;
+};
+
+var updateApplication = function (e) {
+  // var latest = appRects[0];
+
+  // if (latest === undefined ||
+      // ) {
+  //   var symbol;
+
+    // do {
+    //   symbol = _.sample(appSymbols);
+    // } while(latest &&
+    //         (symbol.definition.bounds.height === latest.bounds.height));
+
+    // var placed = symbol.place();
+
+  //   
+
+
+
+  //   appRects.unshift(placed);
+  // }
+
+  _.each(appRects, (rect) => {
+    rect.position.x += RECT_SPEED * e.delta;
   });
 };
 
@@ -185,6 +304,7 @@ var update = function (e) {
 
   updateScreen(e);
   updateWire(e);
+  updateMorph(e);
   updateApplication(e);
 };
 
@@ -206,15 +326,15 @@ var prepareComponents = function () {
   // Cache the keys in symbols
   symbolNames = _.keys(symbols);
 
-  // Prepare application rectangles
+  // Prepare app rectangles
   _.each(_.range(
     APP_RECT_MIN_HEIGHT,
     APP_RECT_MAX_HEIGHT + APP_RECT_HEIGHT_STEP,
     APP_RECT_HEIGHT_STEP
   ), (height) => {
-    applicationSymbols.push(new paper.Symbol(new paper.Path.Rectangle({
+    appSymbols.push(new paper.Symbol(new paper.Path.Rectangle({
       size: [APP_RECT_WIDTH, height],
-      radius: 20,
+      radius: 2,
       fillColor: TRAIN_FILL,
     })));
   });
@@ -237,10 +357,10 @@ var prepareComponents = function () {
       background.fillColor = TRAIN_FILL;
       screenMask.insertBelow(background);
 
-      paper.project.importSVG(APP_IMAGE, (application) => {
-        application.fillColor = TRAIN_FILL;
-        application.position.y = APP_Y;
-        application.insertBelow(screenMask);
+      paper.project.importSVG(APP_IMAGE, (app) => {
+        app.fillColor = TRAIN_FILL;
+        app.position.y = APP_Y;
+        app.insertBelow(screenMask);
 
         finalize();
       });
@@ -271,6 +391,16 @@ var prepareComponents = function () {
     wireGroup.clipping = true;
 
     wire.insertBelow(wireGroup);
+
+    var appMask = new paper.Path.Rectangle({
+      size: [APP_MASK_WIDTH, APP_MASK_HEIGHT],
+      position: [paper.view.center.x, APP_MASK_Y],
+      clipMask: true,
+      // fillColor: "purple"
+    });
+
+    appGroup = new paper.Group(appMask);
+    appGroup.clipped = true;
 
     ready = true; // Ready to start drawing
     canvas.classList.add("train-canvas--ready");
