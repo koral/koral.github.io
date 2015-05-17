@@ -24,6 +24,7 @@ const BACKGROUND_IMAGE        = "/images/train_background.svg";
 const WIRE_Y                  = 696.5;
 const WIRE_HEIGHT             = 219;
 const WIRE_MASK_HEIGHT        = WIRE_HEIGHT + 100;
+const WIRE_MORPH_THRESHOLD    = WIRE_Y - WIRE_HEIGHT / 2 - 20;
 
 const APP_Y                   = 488;
 const APP_WIDTH               = TRAIN_WIDTH;
@@ -40,6 +41,7 @@ const APP_RECT_ANIMATION_TIME = 0.3 * ANIMATION_SPEED; // s
 
 const APP_MASK_WIDTH          = 370;
 const APP_MASK_HEIGHT         = 168;
+const APP_MASK_X              = TRAIN_WIDTH / 2;
 const APP_MASK_Y              = 505;
 
 const SCREEN_WIDTH            = 264;
@@ -55,9 +57,11 @@ const SCREEN_MASK_INSET       = 12;
 const WIRE_APP_MASK_X         = TRAIN_WIDTH / 2;
 const WIRE_APP_MASK_Y         = 487;
 
-const SHAPE_SPEED             = 80 / ANIMATION_SPEED; // px/sec
-const RECT_SPEED              = 80 / ANIMATION_SPEED;
-const SCREEN_SHAPE_INTERVAL   = 250 * ANIMATION_SPEED;
+const WIRE_SHAPE_MARGIN       = 30;
+
+const SHAPE_SPEED             = 60 / ANIMATION_SPEED; // px/sec
+const RECT_SPEED              = 60 / ANIMATION_SPEED;
+const SCREEN_SHAPE_INTERVAL   = 320 * ANIMATION_SPEED;
 
 const SYMBOL_STROKE_WIDTH     = 3.2;
 const SYMBOL_ATTRIBUTES       = {
@@ -109,6 +113,8 @@ var generateLane = function* () {
 var laneGenerator = generateLane();
 
 var addScreenShape = function () {
+  if (!document.hasFocus()) return;
+
   var lane = laneGenerator.next().value;
 
   do {
@@ -137,7 +143,7 @@ var addToWire = function (shape) {
 
   // Discard shape if not distant at least 10px from the last one on the wire
   if (last && last.position.y + last.bounds.height / 2 >
-              WIRE_Y + WIRE_HEIGHT / 2 - 10) {
+              WIRE_Y + WIRE_HEIGHT / 2 - WIRE_SHAPE_MARGIN) {
     shape.remove();
     return;
   }
@@ -196,7 +202,8 @@ var updateWire = function (e) {
   _.remove(wireSymbols, (shape) => {
     shape.position.y -= SHAPE_SPEED * e.delta;
 
-    if (!morph.ongoing && (shape.position.y < WIRE_Y - WIRE_HEIGHT / 2)) {
+    if (!morph.ongoing &&
+        (shape.position.y - shape.bounds.height / 2 < WIRE_MORPH_THRESHOLD)) {
       var latest = appRects[0];
 
       // What will be the distance of the latest when the anim's over?
@@ -233,7 +240,6 @@ var updateWire = function (e) {
         morph.speed  = morph.length / APP_RECT_ANIMATION_TIME;
 
         morph.rect.position = morph.start;
-        // morph.rect.scale(0);
 
         // Finally, remove this shape from wireSymbols
         return true;
@@ -274,33 +280,19 @@ var updateMorph = function (e) {
 };
 
 var updateApplication = function (e) {
-  // var latest = appRects[0];
-
-  // if (latest === undefined ||
-      // ) {
-  //   var symbol;
-
-    // do {
-    //   symbol = _.sample(appSymbols);
-    // } while(latest &&
-    //         (symbol.definition.bounds.height === latest.bounds.height));
-
-    // var placed = symbol.place();
-
-  //
-
-
-
-  //   appRects.unshift(placed);
-  // }
-
-  _.each(appRects, (rect) => {
+  _.remove(appRects, (rect) => {
     rect.position.x += RECT_SPEED * e.delta;
+
+    if (rect.position.x > APP_MASK_X + (APP_MASK_WIDTH + APP_RECT_WIDTH) / 2) {
+      rect.remove();
+      return true;
+    }
   });
 };
 
 var update = function (e) {
-  if (!ready) return;
+  // Skip frames when gaps happen
+  if (!ready || e.delta > 1) return;
 
   updateScreen(e);
   updateWire(e);
@@ -394,7 +386,7 @@ var prepareComponents = function () {
 
     var appMask = new paper.Path.Rectangle({
       size: [APP_MASK_WIDTH, APP_MASK_HEIGHT],
-      position: [paper.view.center.x, APP_MASK_Y],
+      position: [APP_MASK_X, APP_MASK_Y],
       clipMask: true,
       // fillColor: "purple"
     });
