@@ -1,10 +1,10 @@
 // Animation for the landing page hero
 
-var _       = require("lodash");
-var paperjs = require("paper");
-var paper   = new paperjs.PaperScope();
+import { PaperScope } from "paper";
+import fn from "koral-util/fn";
+import _ from "lodash";
 
-var fn = require("koral-util/fn");
+var paper = new PaperScope();
 
 var container = document.querySelector("#hero");
 var canvas    = document.querySelector("#hero-canvas");
@@ -113,9 +113,7 @@ var setup = function () {
   window.addEventListener("resize", fn.fire(resize));
 };
 
-var start = function () {
+export function start() {
   setup();
   container.classList.add("hero--ready");
-};
-
-module.exports = { start };
+}

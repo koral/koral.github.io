@@ -1,8 +1,9 @@
 // Animation for the landing page hero
 
-var _       = require("lodash");
-var paperjs = require("paper");
-var paper   = new paperjs.PaperScope();
+import { PaperScope } from "paper";
+import _ from "lodash";
+
+var paper = new PaperScope();
 
 window.paper = paper;
 
@@ -407,7 +408,7 @@ var prepareComponents = function () {
   }
 };
 
-var start = function () {
+export function start() {
   // document.addEventListener("click", () => {
     // return;
   paper.setup(canvas);
@@ -424,6 +425,4 @@ var start = function () {
   paper.view.onFrame = update;
   setInterval(addScreenShape, SCREEN_SHAPE_INTERVAL);
   // });
-};
-
-module.exports = { start };
+}
