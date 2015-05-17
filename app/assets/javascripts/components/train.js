@@ -164,12 +164,13 @@ var updateWire = function (e) {
 var updateApplication = function (e) {
   var last = applicationRects[0];
 
-  if (!last || last.position.x - APP_RECT_WIDTH * 1.5 - APP_RECT_MARGIN * 2) {
+  if (last === undefined ||
+      last.position.x - APP_RECT_WIDTH * 1.5 - APP_RECT_MARGIN * 2) {
     var placed = _.sample(applicationSymbols).place();
 
     placed.position = [
       APP_RECT_START_X + APP_RECT_WIDTH / 2,
-
+      APP_RECT_START_Y + placed.bounds.height / 2,
     ];
 
     applicationRects.unshift(placed);
@@ -277,7 +278,7 @@ var prepareComponents = function () {
 };
 
 var start = function () {
-  // document.addEventListener("click", () => {
+  document.addEventListener("click", () => {
     // return;
   paper.setup(canvas);
 
@@ -292,7 +293,7 @@ var start = function () {
   // Bind the onFrame method
   paper.view.onFrame = update;
   setInterval(addScreenShape, SCREEN_SHAPE_INTERVAL);
-  // });
+  });
 };
 
 module.exports = { start };
