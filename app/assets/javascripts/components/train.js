@@ -6,36 +6,50 @@ var paper   = new paperjs.PaperScope();
 
 var canvas = document.querySelector("#train-canvas");
 
-const TRAIN_FILL = "#ed3832";
+const TRAIN_FILL                   = "#ed3832";
 
-const TRAIN_WIDTH             = 380;
-const TRAIN_HEIGHT            = 1051;
+// Most values are constants to avoid debugging nightmares
 
-const SCREEN_MASK_IMAGE       = "/images/train_screen_mask.svg";
-const BACKGROUND_IMAGE        = "/images/train_background.svg";
+const TRAIN_WIDTH           = 380;
+const TRAIN_HEIGHT          = 1051;
 
-const WIRE_Y                  = 696.5;
-const WIRE_HEIGHT             = 219;
+const APP_IMAGE             = "/images/train_application.svg";
+const SCREEN_MASK_IMAGE     = "/images/train_screen_mask.svg";
+const BACKGROUND_IMAGE      = "/images/train_background.svg";
 
-const APPLICATION_WIDTH       = TRAIN_WIDTH;
+const WIRE_Y                = 696.5;
+const WIRE_HEIGHT           = 219;
+const WIRE_MASK_HEIGHT      = WIRE_HEIGHT + 100;
 
-const SCREEN_WIDTH            = 264;
-const SCREEN_HEIGHT           = 154;
-const SCREEN_MARGIN           = 30;
-const SCREEN_LANES            = 5;
+const APP_Y                 = 488;
+const APP_WIDTH             = TRAIN_WIDTH;
 
-const SCREEN_MASK_X           = 190;
-const SCREEN_MASK_Y           = 891;
-const SCREEN_MASK_INSET       = 12;
+const APP_RECT_WIDTH        = 70;
+const APP_RECT_MIN_HEIGHT   = 40;
+const APP_RECT_MAX_HEIGHT   = 120;
+const APP_RECT_HEIGHT_STEP  = 20;
+const APP_RECT_MARGIN       = 5;
+const APP_RECT_START_X      = 12;
+const APP_RECT_START_Y      = 421;
 
-const WIRE_APPLICATION_MASK_X = TRAIN_WIDTH / 2;
-const WIRE_APPLICATION_MASK_Y = 487;
+const SCREEN_WIDTH          = 264;
+const SCREEN_HEIGHT         = 154;
+const SCREEN_MARGIN         = 30;
+const SCREEN_LANES          = 5;
+const SCREEN_LANE_RANDOM    = 18;
 
-const SHAPE_SPEED             = 80; // px/sec
-const SCREEN_SHAPE_INTERVAL   = 250;
+const SCREEN_MASK_X         = 190;
+const SCREEN_MASK_Y         = 891;
+const SCREEN_MASK_INSET     = 12;
 
-const SYMBOL_STROKE_WIDTH     = 3;
-const SYMBOL_ATTRIBUTES       = {
+const WIRE_APP_MASK_X       = TRAIN_WIDTH / 2;
+const WIRE_APP_MASK_Y       = 487;
+
+const SHAPE_SPEED           = 80; // px/sec
+const SCREEN_SHAPE_INTERVAL = 250;
+
+const SYMBOL_STROKE_WIDTH   = 3.2;
+const SYMBOL_ATTRIBUTES     = {
   fillColor:   TRAIN_FILL,
   strokeColor: "white",
   strokeWidth: SYMBOL_STROKE_WIDTH,
@@ -46,15 +60,18 @@ var background;
 var screenMask;
 var symbolNames;
 
-var symbols          = {};
-var lastSymbolInLane = [];
-var screenSymbols    = [];
+var symbols            = {};
+var lastSymbolInLane   = [];
+var screenSymbols      = [];
 
 var wireGroup;
 var wireMask;
-var wireSymbols = [];
+var wireSymbols        = [];
 
-var ready        = false;
+var applicationRects   = [];
+var applicationSymbols = [];
+
+var ready              = false;
 
 // Generates lanes in a way that is guaranteed to distribute items througout
 // the screen without repetition
@@ -95,14 +112,15 @@ var addScreenShape = function () {
   var screenX = (SCREEN_WIDTH - SCREEN_MARGIN * 2) / (SCREEN_LANES - 1) * lane;
 
   placed.position = {
-    x: screenX + SCREEN_MASK_X - SCREEN_WIDTH / 2 + SCREEN_MARGIN,
+    x: screenX +
+       Math.round(Math.random() * SCREEN_LANE_RANDOM - SCREEN_LANE_RANDOM / 2) +
+       SCREEN_MASK_X - SCREEN_WIDTH / 2 + SCREEN_MARGIN,
     y: SCREEN_MASK_Y + SCREEN_HEIGHT / 2 + placed.bounds.height,
   };
 };
 
 var addToWire = function (shape) {
   var last = wireSymbols[0];
-
 
   // Discard shape if not distant at least 10px from the last one on the wire
   if (last && last.position.y + last.bounds.height / 2 >
@@ -135,10 +153,29 @@ var updateWire = function (e) {
   _.remove(wireSymbols, (shape) => {
     var position = shape.position.y -= SHAPE_SPEED * e.delta;
 
-    if (shape.position.y + shape.bounds.height / 2 < WIRE_Y - WIRE_HEIGHT / 2) {
+    if (shape.position.y < WIRE_Y - WIRE_HEIGHT / 2) {
+      // Consider shape for jumping
       shape.remove();
       return true;
     }
+  });
+};
+
+var updateApplication = function (e) {
+  var last = applicationRects[0];
+
+  if (!last || last.position.x - APP_RECT_WIDTH * 1.5 - APP_RECT_MARGIN * 2) {
+    var placed = _.sample(applicationSymbols).place();
+
+    placed.position = [
+      APP_RECT_START_X + APP_RECT_WIDTH / 2,
+
+    ];
+
+    applicationRects.unshift(placed);
+  }
+  _.each(applicationRects, (rect) => {
+    rect.position.x += SHAPE_SPEED * e.delta;
   });
 };
 
@@ -147,10 +184,11 @@ var update = function (e) {
 
   updateScreen(e);
   updateWire(e);
+  updateApplication(e);
 };
 
 var prepareComponents = function () {
-  // Prepare symbols
+  // Prepare screen symbols
   symbols.circle = new paper.Symbol(new paper.Path.Circle(_.defaults({
     radius: 16 + SYMBOL_STROKE_WIDTH / 2,
   }, SYMBOL_ATTRIBUTES)));
@@ -167,6 +205,19 @@ var prepareComponents = function () {
   // Cache the keys in symbols
   symbolNames = _.keys(symbols);
 
+  // Prepare application rectangles
+  _.each(_.range(
+    APP_RECT_MIN_HEIGHT,
+    APP_RECT_MAX_HEIGHT + APP_RECT_HEIGHT_STEP,
+    APP_RECT_HEIGHT_STEP
+  ), (height) => {
+    applicationSymbols.push(new paper.Symbol(new paper.Path.Rectangle({
+      size: [APP_RECT_WIDTH, height],
+      radius: 20,
+      fillColor: TRAIN_FILL,
+    })));
+  });
+
   // Load SVGs
   paper.project.importSVG(SCREEN_MASK_IMAGE, (mask) => {
     if (!mask) return;
@@ -176,6 +227,7 @@ var prepareComponents = function () {
     screenMask.position  = [SCREEN_MASK_X, SCREEN_MASK_Y];
     screenMask.fillColor = "white";
 
+
     paper.project.importSVG(BACKGROUND_IMAGE, (image) => {
       if (!image) return;
 
@@ -184,7 +236,13 @@ var prepareComponents = function () {
       background.fillColor = TRAIN_FILL;
       screenMask.insertBelow(background);
 
-      finalize();
+      paper.project.importSVG(APP_IMAGE, (application) => {
+        application.fillColor = TRAIN_FILL;
+        application.position.y = APP_Y;
+        application.insertBelow(screenMask);
+
+        finalize();
+      });
     });
   });
 
@@ -197,32 +255,30 @@ var prepareComponents = function () {
     });
 
     wireMask = new paper.Path.Rectangle({
-      size:     [TRAIN_WIDTH, WIRE_HEIGHT],
-      position: [paper.view.center.x, WIRE_Y],
+      size:     [TRAIN_WIDTH, WIRE_MASK_HEIGHT],
+      position: [
+        paper.view.center.x,
+        WIRE_Y - (WIRE_MASK_HEIGHT - WIRE_HEIGHT) / 2
+      ],
       clipMask: true,
       fillColor: "purple",
     });
-
-    // wireMask.addChild(new paper.Path.Rectangle({
-    //   size:     [APPLICATION_WIDTH, 200],
-    //   position: [
-    //     WIRE_APPLICATION_MASK_X,
-    //     WIRE_APPLICATION_MASK_Y,
-    //   ],
-    //   fillColor: "purple",
-    // }));
 
     wireMask.insertAbove(screenMask);
 
     wireGroup = new paper.Group(wireMask);
     wireGroup.clipping = true;
 
+    wire.insertBelow(wireGroup);
+
     ready = true; // Ready to start drawing
+    canvas.classList.add("train-canvas--ready");
   }
 };
 
 var start = function () {
-  // return;
+  // document.addEventListener("click", () => {
+    // return;
   paper.setup(canvas);
 
   // Resize the canvas
@@ -236,6 +292,7 @@ var start = function () {
   // Bind the onFrame method
   paper.view.onFrame = update;
   setInterval(addScreenShape, SCREEN_SHAPE_INTERVAL);
+  // });
 };
 
 module.exports = { start };
