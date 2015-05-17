@@ -1,7 +1,10 @@
 // Support for generators
-require("babel/polyfill");
+import "babel/polyfill";
+
+import train from "./components/train";
+import hero from "./components/hero";
 
 document.addEventListener("DOMContentLoaded", function () {
-  require("./components/hero").start();
-  require("./components/train").start();
+  hero.start();
+  train.start();
 });
