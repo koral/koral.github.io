@@ -200,7 +200,7 @@ var updateWire = function (e) {
       var latest = appRects[0];
 
       // What will be the distance of the latest when the anim's over?
-      var animationDelta = RECT_SPEED / APP_RECT_ANIMATION_TIME;
+      var animationDelta = RECT_SPEED * APP_RECT_ANIMATION_TIME;
 
       if (!latest || (latest.position.x + animationDelta -
           APP_RECT_WIDTH * 1.5 - APP_RECT_MARGIN * 2 >= APP_RECT_START_X)) {
@@ -287,7 +287,7 @@ var updateApplication = function (e) {
 
     // var placed = symbol.place();
 
-  //   
+  //
 
 
 
@@ -408,7 +408,7 @@ var prepareComponents = function () {
 };
 
 var start = function () {
-  document.addEventListener("click", () => {
+  // document.addEventListener("click", () => {
     // return;
   paper.setup(canvas);
 
@@ -423,7 +423,7 @@ var start = function () {
   // Bind the onFrame method
   paper.view.onFrame = update;
   setInterval(addScreenShape, SCREEN_SHAPE_INTERVAL);
-  });
+  // });
 };
 
 module.exports = { start };
