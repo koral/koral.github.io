@@ -1,7 +1,7 @@
 // Animation for the landing page hero
 
 import { PaperScope } from "paper";
-import fn from "koral-util/fn";
+import * as fn from "koral-util/fn";
 import _ from "lodash";
 
 var paper = new PaperScope();
@@ -22,7 +22,7 @@ var ringRadius = (index) => CIRCLE_RADIUS + CIRCLE_RADIUS * index * 4;
 var ringOffset = (index) => ringRadius(index) - CIRCLE_RADIUS;
 
 // Generates suitable amounts of circles for each ring
-var generateRingCount = function* () {
+function* generateRingCount() {
   var current = 9; // Minimum amount
 
   while (true) {
@@ -32,11 +32,11 @@ var generateRingCount = function* () {
     current += 2;
     while ((360 * 10) % current !== 0) current += 1;
   }
-};
+}
 
 var ringCountGenerator = generateRingCount();
 
-var addRing = function () {
+function addRing() {
   var nextIndex = rings.length;
 
   var items = null;
@@ -53,19 +53,9 @@ var addRing = function () {
 
   // Add the new ring
   rings.push({ items, angle: 0 });
-};
+}
 
-var resize = _.throttle(function () {
-  canvas.width = container.offsetWidth;
-  canvas.height = container.offsetHeight;
-
-  paper.view.viewSize = new paper.Size(canvas.width, canvas.height);
-
-  // Ensure there are enough rings to fill the screen
-  while (ringRadius(rings.length - 1) < (canvas.width / 2)) addRing();
-});
-
-var update = function (e) {
+function update(e) {
   var angularDelta = ANGULAR_VELOCITY * (e.delta);
 
   // Special case to position the middle circle (ring 0)
@@ -96,9 +86,19 @@ var update = function (e) {
       circle.position.y = paper.view.center.y + Math.sin(angle) * offset;
     }
   });
-};
+}
 
-var setup = function () {
+var resize = _.throttle(() => {
+  canvas.width = container.offsetWidth;
+  canvas.height = container.offsetHeight;
+
+  paper.view.viewSize = new paper.Size(canvas.width, canvas.height);
+
+  // Ensure there are enough rings to fill the screen
+  while (ringRadius(rings.length - 1) < (canvas.width / 2)) addRing();
+});
+
+export function start() {
   paper.setup(canvas);
 
   circle = new paper.Symbol(new paper.Path.Circle({
@@ -111,9 +111,6 @@ var setup = function () {
 
   // Handle resizing
   window.addEventListener("resize", fn.fire(resize));
-};
 
-export function start() {
-  setup();
   container.classList.add("hero--ready");
 }

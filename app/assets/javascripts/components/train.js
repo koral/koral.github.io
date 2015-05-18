@@ -28,7 +28,6 @@ const WIRE_MASK_HEIGHT        = WIRE_HEIGHT + 100;
 const WIRE_MORPH_THRESHOLD    = WIRE_Y - WIRE_HEIGHT / 2 - 20;
 
 const APP_Y                   = 488;
-const APP_WIDTH               = TRAIN_WIDTH;
 
 const APP_RECT_WIDTH          = 70;
 const APP_RECT_MIN_HEIGHT     = 40;
@@ -53,10 +52,6 @@ const SCREEN_LANE_RANDOM      = 18;
 
 const SCREEN_MASK_X           = 190;
 const SCREEN_MASK_Y           = 891;
-const SCREEN_MASK_INSET       = 12;
-
-const WIRE_APP_MASK_X         = TRAIN_WIDTH / 2;
-const WIRE_APP_MASK_Y         = 487;
 
 const WIRE_SHAPE_MARGIN       = 30;
 
@@ -93,7 +88,7 @@ var ready            = false;
 
 // Generates lanes in a way that is guaranteed to distribute items througout
 // the screen without repetition
-var generateLane = function* () {
+function* generateLane() {
   var lanes = [];
   var last;
 
@@ -109,11 +104,11 @@ var generateLane = function* () {
     last = lanes.shift();
     yield last;
   }
-};
+}
 
 var laneGenerator = generateLane();
 
-var addScreenShape = function () {
+function addScreenShape() {
   if (!document.hasFocus()) return;
 
   var lane = laneGenerator.next().value;
@@ -137,9 +132,9 @@ var addScreenShape = function () {
        SCREEN_MASK_X - SCREEN_WIDTH / 2 + SCREEN_MARGIN,
     y: SCREEN_MASK_Y + SCREEN_HEIGHT / 2 + placed.bounds.height,
   };
-};
+}
 
-var addToWire = function (shape) {
+function addToWire(shape) {
   var last = wireSymbols[0];
 
   // Discard shape if not distant at least 10px from the last one on the wire
@@ -155,20 +150,46 @@ var addToWire = function (shape) {
   wireSymbols.unshift(shape);
 
   shape.position.y = WIRE_Y + WIRE_HEIGHT / 2 + shape.bounds.height / 2;
-};
+}
 
-var startMorph = function (shape) {
+function startMorph(shape) {
+  var latest = appRects[0];
 
-};
+  var nextSymbol;
 
-var appRectStartPosition = function (rect) {
+  do {
+    nextSymbol = _.sample(appSymbols);
+  } while (latest && (nextSymbol === latest.symbol));
+
+  morph.ongoing = true;
+  morph.rect    = nextSymbol.place();
+  morph.shape   = shape;
+
+  // Put rect in the final position
+  morph.rect.position = appRectStartPosition(morph.rect);
+
+  morph.matrix  = morph.rect.matrix.clone();
+
+  morph.start   = shape.position.clone();
+  morph.current = morph.start;
+  morph.target  = morph.rect.position.clone();
+
+  // Calculate the vector
+  morph.vector = morph.target.subtract(shape.position);
+  morph.length = morph.vector.length;
+  morph.speed  = morph.length / APP_RECT_ANIMATION_TIME;
+
+  morph.rect.position = morph.start;
+}
+
+function appRectStartPosition(rect) {
   return new paper.Point(
     APP_RECT_START_X + APP_RECT_WIDTH / 2,
     APP_RECT_START_Y + rect.bounds.height / 2
   );
-};
+}
 
-var addToApp = function (rect) {
+function addToApp(rect) {
   var latest = appRects[0];
 
   var position = appRectStartPosition(rect);
@@ -185,9 +206,9 @@ var addToApp = function (rect) {
   appGroup.addChild(rect);
 
   appRects.unshift(rect);
-};
+}
 
-var updateScreen = function (e) {
+function updateScreen(e) {
   _.remove(screenSymbols, (shape) => {
     var position = shape.position.y -= SHAPE_SPEED * e.delta;
 
@@ -197,9 +218,9 @@ var updateScreen = function (e) {
       return true;
     }
   });
-};
+}
 
-var updateWire = function (e) {
+function updateWire(e) {
   _.remove(wireSymbols, (shape) => {
     shape.position.y -= SHAPE_SPEED * e.delta;
 
@@ -212,44 +233,16 @@ var updateWire = function (e) {
 
       if (!latest || (latest.position.x + animationDelta -
           APP_RECT_WIDTH * 1.5 - APP_RECT_MARGIN * 2 >= APP_RECT_START_X)) {
-
-        // We should start the morph animation, to transform this shape into
-        // one of the rects on the "app" screen.
-
-        var nextSymbol;
-
-        do {
-          nextSymbol = _.sample(appSymbols);
-        } while (latest && (nextSymbol === latest.symbol));
-
-        morph.ongoing = true;
-        morph.rect    = nextSymbol.place();
-        morph.shape   = shape;
-
-        // Put rect in the final position
-        morph.rect.position = appRectStartPosition(morph.rect);
-
-        morph.matrix  = morph.rect.matrix.clone();
-
-        morph.start   = shape.position.clone();
-        morph.current = morph.start;
-        morph.target  = morph.rect.position.clone();
-
-        // Calculate the vector
-        morph.vector = morph.target.subtract(shape.position);
-        morph.length = morph.vector.length;
-        morph.speed  = morph.length / APP_RECT_ANIMATION_TIME;
-
-        morph.rect.position = morph.start;
+        startMorph(shape);
 
         // Finally, remove this shape from wireSymbols
         return true;
       }
     }
   });
-};
+}
 
-var updateMorph = function (e) {
+function updateMorph(e) {
   if (!morph.shape || !morph.ongoing) return;
 
   var segment = new paper.Point({
@@ -278,9 +271,9 @@ var updateMorph = function (e) {
     morph.ongoing = false;
     addToApp(morph.rect);
   }
-};
+}
 
-var updateApplication = function (e) {
+function updateApplication(e) {
   _.remove(appRects, (rect) => {
     rect.position.x += RECT_SPEED * e.delta;
 
@@ -289,9 +282,9 @@ var updateApplication = function (e) {
       return true;
     }
   });
-};
+}
 
-var update = function (e) {
+function update(e) {
   // Skip frames when gaps happen
   if (!ready || e.delta > 1) return;
 
@@ -299,9 +292,9 @@ var update = function (e) {
   updateWire(e);
   updateMorph(e);
   updateApplication(e);
-};
+}
 
-var prepareComponents = function () {
+function prepareComponents() {
   // Prepare screen symbols
   symbols.circle = new paper.Symbol(new paper.Path.Circle(_.defaults({
     radius: 16 + SYMBOL_STROKE_WIDTH / 2,
@@ -398,11 +391,9 @@ var prepareComponents = function () {
     ready = true; // Ready to start drawing
     canvas.classList.add("train-canvas--ready");
   }
-};
+}
 
 export function start() {
-  // document.addEventListener("click", () => {
-    // return;
   paper.setup(canvas);
 
   // Resize the canvas
@@ -416,5 +407,4 @@ export function start() {
   // Bind the onFrame method
   paper.view.onFrame = update;
   setInterval(addScreenShape, SCREEN_SHAPE_INTERVAL);
-  // });
 }
