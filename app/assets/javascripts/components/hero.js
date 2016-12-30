@@ -66,16 +66,17 @@ function update(e) {
   _.each(rings, (ring, index) => {
     if (index === 0) return;
 
-    var offset = ringOffset(index);
-    var count  = ring.items.length;
-    var step   = 2 * Math.PI / count;
+    var offset    = ringOffset(index);
+    var count     = ring.items.length;
+    var step      = 2 * Math.PI / count;
+    var direction = index % 2 ? 1 : -1;
 
     // Apply a modifier on the angular velocity inversely proportional to the
     // current index
-    ring.angle += angularDelta / (index / 5);
+    ring.angle += direction * angularDelta / (index / 5);
 
     // Reset when overflowing
-    if (ring.angle > Math.PI * 2) ring.angle -= Math.PI * 2;
+    ring.angle %= Math.PI * 2;
 
     // Position every circle in the right place
     for (let i = 0; i < count; i += 1) {
